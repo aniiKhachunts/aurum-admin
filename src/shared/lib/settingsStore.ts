@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import { getSettings, type AppSettings } from "../../features/settings/api/settingsApi"
+import {getErrorMessage} from "./getErrorMessage.ts";
 
 type SettingsState = {
     loaded: boolean
@@ -24,8 +25,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         try {
             const res = await getSettings()
             set({ settings: res.item, loaded: true, loading: false, error: null })
-        } catch (e: any) {
-            set({ error: e?.message || "Error", loading: false })
+        } catch (e: unknown) {
+            set({ error: getErrorMessage(e) || "Error", loading: false })
         }
     },
 }))

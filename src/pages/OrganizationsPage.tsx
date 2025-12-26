@@ -17,8 +17,9 @@ export default function OrganizationsPage() {
         try {
             const res = await getOrganizations()
             setItems(res.items)
-        } catch (e: any) {
-            setErr(e?.message || "Error")
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : "Error"
+            setErr(message || "Error")
         } finally {
             setLoading(false)
         }
@@ -28,7 +29,7 @@ export default function OrganizationsPage() {
         load()
     }, [])
 
-    const columns = useMemo<ColumnDef<Org, any>[]>(
+    const columns = useMemo<ColumnDef<Org, unknown>[]>(
         () => [
             { header: "Name", accessorKey: "name" },
             { header: "Plan", accessorKey: "plan" },

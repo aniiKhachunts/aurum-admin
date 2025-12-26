@@ -4,13 +4,13 @@ import {
     getSortedRowModel,
     type SortingState,
     useReactTable,
-    type OnChangeFn,
+    type OnChangeFn, type ColumnDef,
 } from "@tanstack/react-table"
 import { useMemo, useState } from "react"
 
 type Props<T> = {
     data: T[]
-    columns: any[]
+    columns: ColumnDef<T, unknown>[]
     onRowClick?: (row: T) => void
     sorting?: SortingState
     onSortingChange?: OnChangeFn<SortingState>

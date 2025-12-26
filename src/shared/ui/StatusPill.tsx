@@ -10,8 +10,10 @@ const tones: Record<Tone, { fg: string; bg: string; bd: string }> = {
 
 type Props = {
     label: string
-    tone?: Tone
+    tone?: StatusTone
 }
+
+export type StatusTone = "success" | "info" | "warn" | "danger" | "neutral"
 
 export function StatusPill({ label, tone = "neutral" }: Props) {
     const t = tones[tone]

@@ -2,6 +2,7 @@ import { useDevSettingsStore } from "./devSettingsStore"
 import { useSettingsStore } from "./settingsStore"
 import { useApiMetricsStore } from "./apiMetricsStore"
 import {useSessionStore} from "./sessionStore.ts";
+import {getErrorMessage} from "./getErrorMessage.ts";
 
 type ApiErrorShape = {
     status: number
@@ -35,8 +36,7 @@ function randInt(min: number, max: number) {
 function toUrlString(input: RequestInfo | URL) {
     if (typeof input === "string") return input
     if (input instanceof URL) return input.toString()
-    const anyInput: any = input
-    if (anyInput?.url) return String(anyInput.url)
+    if (input instanceof Request) return input.url
     return String(input)
 }
 
@@ -116,7 +116,7 @@ export async function apiFetch<T>(input: RequestInfo | URL, init?: RequestInit):
         })
 
         if (!res.ok) {
-            let payload: any = null
+            let payload: unknown = null
             try {
                 payload = await res.json()
             } catch {
@@ -125,16 +125,16 @@ export async function apiFetch<T>(input: RequestInfo | URL, init?: RequestInit):
 
             throw new ApiError({
                 status: res.status,
-                message: payload?.message || `Request failed (${res.status})`,
-                code: payload?.code,
-                details: payload?.details,
+                message: getErrorMessage(payload) || `Request failed (${res.status})`,
+                code: getErrorMessage(payload),
+                details: payload,
             })
         }
 
         const ct = res.headers.get("content-type") || ""
         if (ct.includes("application/json")) return (await res.json()) as T
         return (await res.text()) as unknown as T
-    } catch (e: any) {
+    } catch (e: unknown) {
         const ms = Math.round(performance.now() - started)
 
         useApiMetricsStore.getState().push({
@@ -144,13 +144,13 @@ export async function apiFetch<T>(input: RequestInfo | URL, init?: RequestInit):
             url: urlStr,
             ms,
             ok: false,
-            error: e?.message || "Error",
+            error: getErrorMessage(e),
         })
 
         if (e instanceof ApiError) throw e
         throw new ApiError({
             status: 0,
-            message: e?.message || "Network error",
+            message: getErrorMessage(e),
             code: "NETWORK_ERROR",
             details: e,
         })

@@ -9,7 +9,7 @@ export type AuditEvent = {
     action: string
     entityType: AuditEntityType
     entityId: string
-    meta?: any
+    meta?: unknown
 }
 
 export type AuditEventsResponse = {

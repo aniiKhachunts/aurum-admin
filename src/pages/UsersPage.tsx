@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import {useCallback, useEffect, useMemo, useState} from "react"
 import type { ColumnDef, OnChangeFn, SortingState } from "@tanstack/react-table"
 import { Link } from "react-router-dom"
 import { PageHeader } from "../shared/ui/PageHeader"
@@ -10,6 +10,7 @@ import { DataTablePagination } from "../shared/ui/DataTable/DataTablePagination"
 import { DataTableState } from "../shared/ui/DataTable/DataTableStates"
 import { getUsers, type User } from "../features/users/api/usersApi"
 import { useTableQueryState } from "../shared/hooks/useTableQueryState"
+import {getErrorMessage} from "../shared/lib/getErrorMessage.ts";
 
 function tone(status: string) {
     if (status === "active") return "success"
@@ -35,25 +36,25 @@ export default function UsersPage() {
     const search = qs.search
     const sort = qs.sort as SortingState
 
-    async function load() {
+    const load = useCallback(async () => {
         setLoading(true)
         setErr(null)
         try {
             const res = await getUsers({ page, pageSize, search, status, sort })
             setItems(res.items)
             setTotal(res.total)
-        } catch (e: any) {
-            setErr(e?.message || "Error")
+        } catch (e: unknown) {
+            setErr(getErrorMessage(e))
         } finally {
             setLoading(false)
         }
-    }
+    }, [page, pageSize, search, status, sort])
 
     useEffect(() => {
         load()
-    }, [page, pageSize, search, status, sort])
+    }, [load])
 
-    const columns = useMemo<ColumnDef<User, any>[]>(
+    const columns = useMemo<ColumnDef<User, unknown>[]>(
         () => [
             {
                 header: "Name",
@@ -74,7 +75,10 @@ export default function UsersPage() {
                 header: "Status",
                 accessorKey: "status",
                 enableSorting: true,
-                cell: (ctx) => <StatusPill label={ctx.getValue()} tone={tone(ctx.getValue()) as any} />,
+                cell: (ctx) => {
+                    const v = String(ctx.getValue() ?? "")
+                    return <StatusPill label={v} tone={tone(v) as "success" | "info" | "warn" | "danger" | "neutral"} />
+                },
             },
             { header: "Org", accessorKey: "orgId", enableSorting: true },
         ],

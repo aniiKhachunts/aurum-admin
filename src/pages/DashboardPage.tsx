@@ -5,6 +5,7 @@ import { apiFetch } from "../shared/lib/apiClient"
 import {getAuditEvents, type AuditEvent} from "../features/audit/api/auditApi.ts";
 import {OpsKpis} from "../shared/ui/OpsKpis.tsx";
 import {OpsRecentErrors} from "../shared/ui/OpsRecentErrors.tsx";
+import {getErrorMessage} from "../shared/lib/getErrorMessage.ts";
 
 export default function DashboardPage() {
     const [count, setCount] = useState<number | null>(null)
@@ -18,10 +19,10 @@ export default function DashboardPage() {
         setLoading(true)
         setErr(null)
         try {
-            const res = await apiFetch<{ items: any[]; total: number }>("/api/users?page=1&pageSize=10")
+            const res = await apiFetch<{ items: unknown[]; total: number }>("/api/users?page=1&pageSize=10")
             setCount(res.total)
-        } catch (e: any) {
-            setErr(e?.message || "Error")
+        } catch (e: unknown) {
+            setErr(getErrorMessage(e))
         } finally {
             setLoading(false)
         }
@@ -33,8 +34,8 @@ export default function DashboardPage() {
         try {
             const res = await getAuditEvents({ entityType: "", action: "", q: "", limit: 8 })
             setEvents(res.items)
-        } catch (e: any) {
-            setEventsErr(e?.message || "Error")
+        } catch (e: unknown) {
+            setErr(getErrorMessage(e))
         } finally {
             setEventsLoading(false)
         }

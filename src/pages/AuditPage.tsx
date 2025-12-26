@@ -1,14 +1,15 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import type { ColumnDef } from "@tanstack/react-table"
+import { Link, useNavigate } from "react-router-dom"
 import { PageHeader } from "../shared/ui/PageHeader"
 import { SectionCard } from "../shared/ui/SectionCard"
 import { DataTable } from "../shared/ui/DataTable/DataTable"
 import { DataTableState } from "../shared/ui/DataTable/DataTableStates"
 import { DataTableToolbar } from "../shared/ui/DataTable/DataTableToolbar"
 import { getAuditEvents, type AuditEvent } from "../features/audit/api/auditApi"
-import {getAuditEntityHref} from "../features/audit/lib/auditLinks.ts";
-import {Link, useNavigate} from "react-router-dom";
-import {AuditEventDialog} from "../features/audit/ui/AuditEventDialog.tsx";
+import { getAuditEntityHref } from "../features/audit/lib/auditLinks"
+import { AuditEventDialog } from "../features/audit/ui/AuditEventDialog"
+import { getErrorMessage } from "../shared/lib/getErrorMessage"
 
 function uniqSorted(arr: string[]) {
     return Array.from(new Set(arr.filter(Boolean))).sort((a, b) => a.localeCompare(b))
@@ -54,7 +55,7 @@ export default function AuditPage() {
 
     const navigate = useNavigate()
 
-    async function loadCatalog() {
+    const loadCatalog = useCallback(async () => {
         setCatalogLoading(true)
         try {
             const res = await getAuditEvents({ entityType: "", action: "", q: "", limit: 300 })
@@ -62,41 +63,51 @@ export default function AuditPage() {
         } finally {
             setCatalogLoading(false)
         }
-    }
+    }, [])
 
-    async function loadData() {
+    const loadData = useCallback(async () => {
         setLoading(true)
         setErr(null)
         try {
             const res = await getAuditEvents({ entityType, action, q, limit: 150 })
             setItems(res.items)
-        } catch (e: any) {
-            setErr(e?.message || "Error")
+        } catch (e: unknown) {
+            setErr(getErrorMessage(e))
         } finally {
             setLoading(false)
         }
-    }
+    }, [entityType, action, q])
 
     useEffect(() => {
         loadCatalog()
         loadData()
-    }, [])
-
-    useEffect(() => {
-        loadData()
-    }, [entityType, action, q])
+    }, [loadCatalog, loadData])
 
     const entityTypeOptions = useMemo(() => {
-        const types = uniqSorted(catalog.map((x) => String(x.entityType || "")))
+        const filtered = action ? catalog.filter((x) => String(x.action) === action) : catalog
+        const types = uniqSorted(filtered.map((x) => String(x.entityType || "")))
         return [{ label: "Any", value: "" }, ...types.map((t) => ({ label: titleizeEntityType(t), value: t }))]
-    }, [catalog])
+    }, [catalog, action])
 
     const actionOptions = useMemo(() => {
-        const actions = uniqSorted(catalog.map((x) => String(x.action || "")))
+        const filtered = entityType ? catalog.filter((x) => String(x.entityType) === entityType) : catalog
+        const actions = uniqSorted(filtered.map((x) => String(x.action || "")))
         return [{ label: "Any", value: "" }, ...actions.map((a) => ({ label: titleizeAction(a), value: a }))]
-    }, [catalog])
+    }, [catalog, entityType])
 
-    const columns = useMemo<ColumnDef<AuditEvent, any>[]>(
+    useEffect(() => {
+        if (!entityType) return
+        const ok = entityTypeOptions.some((o) => o.value === entityType)
+        if (!ok) setEntityType("")
+    }, [entityType, entityTypeOptions])
+
+    useEffect(() => {
+        if (!action) return
+        const ok = actionOptions.some((o) => o.value === action)
+        if (!ok) setAction("")
+    }, [action, actionOptions])
+
+    const columns = useMemo<ColumnDef<AuditEvent, unknown>[]>(
         () => [
             {
                 header: "",
@@ -123,8 +134,9 @@ export default function AuditPage() {
                 accessorKey: "entityId",
                 cell: (ctx) => {
                     const e = ctx.row.original
+                    const value = String(ctx.getValue() ?? "")
                     const href = getAuditEntityHref(String(e.entityType), String(e.entityId))
-                    if (!href) return <span>{String(ctx.getValue() ?? "")}</span>
+                    if (!href) return <span>{value}</span>
 
                     return (
                         <Link
@@ -132,7 +144,7 @@ export default function AuditPage() {
                             className="font-medium underline underline-offset-4"
                             onClick={(ev) => ev.stopPropagation()}
                         >
-                            {String(ctx.getValue() ?? "")}
+                            {value}
                         </Link>
                     )
                 },
@@ -140,7 +152,7 @@ export default function AuditPage() {
             {
                 header: "Time",
                 accessorKey: "createdAt",
-                cell: (ctx) => new Date(ctx.getValue() as string).toLocaleString(),
+                cell: (ctx) => new Date(String(ctx.getValue() ?? "")).toLocaleString(),
             },
             { header: "Action", accessorKey: "action" },
             { header: "Entity type", accessorKey: "entityType" },
@@ -160,23 +172,23 @@ export default function AuditPage() {
                 <DataTableToolbar
                     search={{
                         value: q,
-                        onChange: (v) => setQ(v),
-                        placeholder: "Search actor id / entity id / role / action…",
+                        onChange: setQ,
+                        placeholder: "Search id / entity id / role / action…",
                     }}
                     filters={[
                         {
                             key: "entityType",
                             label: "Entity type",
                             value: entityType,
-                            onChange: (v) => setEntityType(v),
-                            options: entityTypeOptions as any,
+                            onChange: setEntityType,
+                            options: entityTypeOptions,
                         },
                         {
                             key: "action",
                             label: "Action",
                             value: action,
-                            onChange: (v) => setAction(v),
-                            options: actionOptions as any,
+                            onChange: setAction,
+                            options: actionOptions,
                         },
                     ]}
                     right={
@@ -212,7 +224,6 @@ export default function AuditPage() {
             </SectionCard>
 
             <AuditEventDialog open={detailsOpen} item={selected} onClose={() => setDetailsOpen(false)} />
-
         </div>
     )
 }

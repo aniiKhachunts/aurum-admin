@@ -1,5 +1,5 @@
 import {Link, NavLink, Outlet} from "react-router-dom"
-import {LayoutGrid, Users, Building2, FolderKanban, CreditCard, Bot, Settings} from "lucide-react"
+import {LayoutGrid, Users, Building2, CreditCard, Bot, Settings} from "lucide-react"
 import {RoleSwitcher} from "../../shared/ui/RoleSwitcher.tsx";
 import {useSessionStore} from "../../shared/lib/sessionStore.ts";
 import {DevToolsPanel} from "../../shared/ui/DevToolsPanel.tsx";
@@ -15,7 +15,6 @@ export function AppShell() {
         {to: "/dashboard", label: "Dashboard", icon: LayoutGrid},
         {to: "/users", label: "Users", icon: Users},
         {to: "/organizations", label: "Organizations", icon: Building2},
-        {to: "/projects", label: "Projects", icon: FolderKanban},
         {to: "/transactions", label: "Transactions", icon: CreditCard},
         ...(f?.aiJobs ? [{ to: "/ai-jobs", label: "AI Jobs", icon: Bot }] : []),
         {to: "/settings", label: "Settings", icon: Settings},

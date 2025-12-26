@@ -8,7 +8,7 @@ type Props = {
     item: AuditEvent | null
 }
 
-function safeJson(v: any) {
+function safeJson(v: unknown) {
     try {
         return JSON.stringify(v ?? null, null, 2)
     } catch {
@@ -72,7 +72,6 @@ export function AuditEventDialog({ open, onClose, item }: Props) {
                 padding: 0,
                 background: "rgb(var(--panel))",
                 boxShadow: "var(--sh-lg)",
-                width: "min(860px, calc(100vw - 32px))",
                 maxHeight: "min(720px, calc(100vh - 64px))",
             }}
         >

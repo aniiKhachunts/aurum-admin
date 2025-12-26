@@ -44,7 +44,6 @@ export function useTableQueryState(config: Config = {}) {
     }))
 
     const [sp, setSp] = useSearchParams()
-    const spKey = sp.toString()
     const lastWrite = useRef("")
 
     const state = useMemo(() => {
@@ -56,7 +55,7 @@ export function useTableQueryState(config: Config = {}) {
         const sort = parsedSort.length ? parsedSort : frozen.defaults.sort
 
         return { page, pageSize, search, sort }
-    }, [spKey, frozen])
+    }, [sp, frozen])
 
     function write(patch: Partial<typeof state>) {
         const next = new URLSearchParams(sp)
@@ -75,15 +74,15 @@ export function useTableQueryState(config: Config = {}) {
 
         const asString = next.toString()
         if (asString === lastWrite.current) return
-        if (asString === spKey) return
+        if (asString === sp.toString()) return
 
         lastWrite.current = asString
         setSp(next, { replace: true })
     }
 
     useEffect(() => {
-        lastWrite.current = spKey
-    }, [spKey])
+        lastWrite.current = sp.toString()
+    }, [sp])
 
     return { state, write }
 }

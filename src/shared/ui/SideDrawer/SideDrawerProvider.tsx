@@ -1,22 +1,16 @@
-import { createContext, useContext, useMemo, useState } from "react"
-
-type DrawerApi = {
-    open: (content: React.ReactNode) => void
-    close: () => void
-}
-
-const Ctx = createContext<DrawerApi | null>(null)
+import { useMemo, useState } from "react"
+import { SideDrawerContext, type SideDrawerApi } from "./sideDrawerContext"
 
 export function SideDrawerProvider({ children }: { children: React.ReactNode }) {
     const [content, setContent] = useState<React.ReactNode | null>(null)
 
-    const api = useMemo<DrawerApi>(() => ({
+    const api = useMemo<SideDrawerApi>(() => ({
         open: (c) => setContent(() => c),
-        close: () => setContent(null)
+        close: () => setContent(null),
     }), [])
 
     return (
-        <Ctx.Provider value={api}>
+        <SideDrawerContext.Provider value={api}>
             {children}
             {content ? (
                 <div className="fixed inset-0 z-50">
@@ -31,12 +25,6 @@ export function SideDrawerProvider({ children }: { children: React.ReactNode }) 
                     </div>
                 </div>
             ) : null}
-        </Ctx.Provider>
+        </SideDrawerContext.Provider>
     )
-}
-
-export function useSideDrawer() {
-    const ctx = useContext(Ctx)
-    if (!ctx) throw new Error("useSideDrawer must be used within SideDrawerProvider")
-    return ctx
 }

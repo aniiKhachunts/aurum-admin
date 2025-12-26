@@ -1,19 +1,6 @@
-import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react"
-import type { ToastItem, ToastKind } from "./types"
-
-type PushArgs = {
-    kind: ToastKind
-    message: string
-    title?: string
-    durationMs?: number
-}
-
-type ToastCtx = {
-    push: (t: PushArgs) => void
-    dismiss: (id: string) => void
-}
-
-const Ctx = createContext<ToastCtx | null>(null)
+import { useCallback, useMemo, useRef, useState } from "react"
+import type { ToastItem } from "./types"
+import { ToastContext, type ToastCtx, type PushArgs } from "./toastContext"
 
 function uid() {
     return Math.random().toString(16).slice(2) + Date.now().toString(16)
@@ -33,16 +20,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     const push = useCallback((t: PushArgs) => {
         const id = uid()
         const durationMs = t.durationMs ?? 3500
-        const item: ToastItem = { id, kind: t.kind, title: t.title, message: t.message, durationMs }
+        const item: ToastItem = { id, ...t, durationMs }
         setToasts((prev) => [item, ...prev].slice(0, 5))
-        const timer = window.setTimeout(() => dismiss(id), durationMs)
-        timers.current.set(id, timer)
+        timers.current.set(id, window.setTimeout(() => dismiss(id), durationMs))
     }, [dismiss])
 
-    const value = useMemo(() => ({ push, dismiss }), [push, dismiss])
+    const value = useMemo<ToastCtx>(() => ({ push, dismiss }), [push, dismiss])
 
     return (
-        <Ctx.Provider value={value}>
+        <ToastContext.Provider value={value}>
             {children}
             <div className="fixed right-4 top-4 z-50 flex w-[360px] max-w-[calc(100vw-2rem)] flex-col gap-2">
                 {toasts.map((t) => (
@@ -52,7 +38,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                                 {t.title ? <div className="text-sm font-semibold">{t.title}</div> : null}
                                 <div className="text-sm opacity-80">{t.message}</div>
                             </div>
-                            <button className="h-8 w-8 rounded-xl border text-sm" onClick={() => dismiss(t.id)} type="button">
+                            <button
+                                className="h-8 w-8 rounded-xl border text-sm"
+                                onClick={() => dismiss(t.id)}
+                                type="button"
+                            >
                                 ×
                             </button>
                         </div>
@@ -66,12 +56,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 ))}
             </div>
             <style>{`@keyframes toastbar{from{transform:scaleX(1)}to{transform:scaleX(0)}}`}</style>
-        </Ctx.Provider>
+        </ToastContext.Provider>
     )
-}
-
-export function useToast() {
-    const ctx = useContext(Ctx)
-    if (!ctx) throw new Error("useToast must be used within ToastProvider")
-    return ctx
 }

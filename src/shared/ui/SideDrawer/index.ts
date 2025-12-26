@@ -1,1 +1,2 @@
-export { SideDrawerProvider, useSideDrawer } from "./SideDrawerProvider"
+export { SideDrawerProvider } from "./SideDrawerProvider"
+export { useSideDrawer } from "./sideDrawerContext"

@@ -1,32 +1,20 @@
-import { createContext, useContext, useMemo, useState } from "react"
-
-type ConfirmOptions = {
-    title?: string
-    message: string
-    confirmText?: string
-    cancelText?: string
-    danger?: boolean
-}
-
-type ConfirmApi = {
-    confirm: (opts: ConfirmOptions) => Promise<boolean>
-}
-
-const Ctx = createContext<ConfirmApi | null>(null)
+import { useMemo, useState } from "react"
+import { ConfirmDialogContext, type ConfirmFn, type ConfirmOptions } from "./confirmDialogContext"
 
 export function ConfirmDialogProvider({ children }: { children: React.ReactNode }) {
     const [open, setOpen] = useState(false)
     const [opts, setOpts] = useState<ConfirmOptions | null>(null)
     const [resolver, setResolver] = useState<((v: boolean) => void) | null>(null)
 
-    const api = useMemo<ConfirmApi>(() => ({
-        confirm: (o) =>
+    const confirm = useMemo<ConfirmFn>(
+        () => (o) =>
             new Promise<boolean>((resolve) => {
                 setOpts(o)
                 setResolver(() => resolve)
                 setOpen(true)
-            })
-    }), [])
+            }),
+        []
+    )
 
     function close(v: boolean) {
         setOpen(false)
@@ -36,8 +24,9 @@ export function ConfirmDialogProvider({ children }: { children: React.ReactNode 
     }
 
     return (
-        <Ctx.Provider value={api}>
+        <ConfirmDialogContext.Provider value={confirm}>
             {children}
+
             {open && opts ? (
                 <div className="fixed inset-0 z-50 grid place-items-center p-4">
                     <div className="absolute inset-0 bg-black/40" onClick={() => close(false)} />
@@ -48,23 +37,13 @@ export function ConfirmDialogProvider({ children }: { children: React.ReactNode 
                             <button className="h-10 rounded-xl border px-4 text-sm font-medium" onClick={() => close(false)} type="button">
                                 {opts.cancelText ?? "Cancel"}
                             </button>
-                            <button
-                                className="h-10 rounded-xl border px-4 text-sm font-medium"
-                                onClick={() => close(true)}
-                                type="button"
-                            >
+                            <button className="h-10 rounded-xl border px-4 text-sm font-medium" onClick={() => close(true)} type="button">
                                 {opts.confirmText ?? "Confirm"}
                             </button>
                         </div>
                     </div>
                 </div>
             ) : null}
-        </Ctx.Provider>
+        </ConfirmDialogContext.Provider>
     )
-}
-
-export function useConfirmDialog() {
-    const ctx = useContext(Ctx)
-    if (!ctx) throw new Error("useConfirmDialog must be used within ConfirmDialogProvider")
-    return ctx
 }

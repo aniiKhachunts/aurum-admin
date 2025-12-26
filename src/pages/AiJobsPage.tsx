@@ -1,45 +1,59 @@
-import { useEffect, useMemo, useState } from "react"
-import type { ColumnDef } from "@tanstack/react-table"
-import { Link } from "react-router-dom"
-import { PageHeader } from "../shared/ui/PageHeader"
-import { SectionCard } from "../shared/ui/SectionCard"
-import { DataTable } from "../shared/ui/DataTable/DataTable"
-import { DataTableState } from "../shared/ui/DataTable/DataTableStates"
-import { DataTableToolbar } from "../shared/ui/DataTable/DataTableToolbar"
-import { ProgressBar } from "../shared/ui/ProgressBar"
-import { Can } from "../shared/ui/Can"
-import { getAiJobs, startAiJob, pauseAiJob, cancelAiJob, type AiJob } from "../features/ai-jobs/api/aiJobsApi"
-import { WriteGuard } from "../shared/ui/WriteGuard"
-import { toast } from "../shared/ui/Toast/toast"
-import { formatApiError } from "../shared/lib/formatApiError"
+import {useCallback, useEffect, useMemo, useState} from "react"
+import type {ColumnDef, OnChangeFn, SortingState} from "@tanstack/react-table"
+import {Link} from "react-router-dom"
+import {PageHeader} from "../shared/ui/PageHeader"
+import {SectionCard} from "../shared/ui/SectionCard"
+import {DataTable} from "../shared/ui/DataTable/DataTable"
+import {DataTableState} from "../shared/ui/DataTable/DataTableStates"
+import {DataTableToolbar} from "../shared/ui/DataTable/DataTableToolbar"
+import {ProgressBar} from "../shared/ui/ProgressBar"
+import {Can} from "../shared/ui/Can"
+import {getAiJobs, startAiJob, pauseAiJob, cancelAiJob, type AiJob} from "../features/ai-jobs/api/aiJobsApi"
+import {WriteGuard} from "../shared/ui/WriteGuard"
+import {toast} from "../shared/ui/Toast/toast"
+import {formatApiError} from "../shared/lib/formatApiError"
 import {ConfirmDialog} from "../shared/ui/ConfirmDialog.tsx";
+import {getErrorMessage} from "../shared/lib/getErrorMessage.ts";
+import {useTableQueryState} from "../shared/hooks/useTableQueryState.ts";
+import {DataTablePagination} from "../shared/ui/DataTable/DataTablePagination.tsx";
 
 export default function AiJobsPage() {
     const [items, setItems] = useState<AiJob[]>([])
-    const [status, setStatus] = useState("")
+    const [total, setTotal] = useState(0)
     const [loading, setLoading] = useState(false)
     const [err, setErr] = useState<string | null>(null)
     const [actingId, setActingId] = useState<string | null>(null)
     const [confirmCancel, setConfirmCancel] = useState<AiJob | null>(null)
 
-    async function load() {
+    const {state: qs, write} = useTableQueryState({
+        searchKey: "status",
+        defaults: {page: 1, pageSize: 20, search: ""}
+    })
+
+    const page = qs.page
+    const pageSize = qs.pageSize
+    const sort = qs.sort as SortingState
+    const status = qs.search
+
+    const load = useCallback(async () => {
         setLoading(true)
         setErr(null)
         try {
-            const res = await getAiJobs({ status })
+            const res = await getAiJobs({
+                page, pageSize, status, sort
+            })
             setItems(res.items)
-        } catch (e: any) {
-            const msg = formatApiError(e)
-            setErr(msg)
-            toast.error("Load failed", msg)
+            setTotal(res.total)
+        } catch (e: unknown) {
+            setErr(getErrorMessage(e))
         } finally {
             setLoading(false)
         }
-    }
+    }, [page, pageSize, status, sort])
 
     useEffect(() => {
         load()
-    }, [status])
+    }, [load])
 
     async function act(kind: "start" | "pause" | "cancel", id: string) {
         setActingId(id)
@@ -52,16 +66,16 @@ export default function AiJobsPage() {
 
             const title = kind === "start" ? "Job started" : kind === "pause" ? "Job paused" : "Job canceled"
             toast.success(title, id)
-        } catch (e: any) {
+        } catch (e: unknown) {
             const msg = formatApiError(e)
-            setErr(msg)
+            setErr(getErrorMessage(msg))
             toast.error("Action failed", msg)
         } finally {
             setActingId(null)
         }
     }
 
-    const columns = useMemo<ColumnDef<AiJob, any>[]>(
+    const columns = useMemo<ColumnDef<AiJob, unknown>[]>(
         () => [
             {
                 header: "Job",
@@ -73,15 +87,15 @@ export default function AiJobsPage() {
                             <Link to={`/ai-jobs/${j.id}`} className="font-medium underline underline-offset-4">
                                 {j.name}
                             </Link>
-                            <div className="mt-1 text-xs" style={{ color: "rgb(var(--muted))" }}>
+                            <div className="mt-1 text-xs" style={{color: "rgb(var(--muted))"}}>
                                 {j.dataset} · {j.model}
                             </div>
                         </div>
                     )
                 },
             },
-            { header: "Priority", accessorKey: "priority" },
-            { header: "Progress", accessorKey: "progress", cell: (ctx) => <ProgressBar value={Number(ctx.getValue())} /> },
+            {header: "Priority", accessorKey: "priority"},
+            {header: "Progress", accessorKey: "progress", cell: (ctx) => <ProgressBar value={Number(ctx.getValue())}/>},
             {
                 header: "Status",
                 accessorKey: "status",
@@ -175,9 +189,14 @@ export default function AiJobsPage() {
         [actingId]
     )
 
+    const onSortingChange: OnChangeFn<SortingState> = (updater) => {
+        const next = typeof updater === "function" ? updater(sort) : updater
+        write({page: 1, sort: next})
+    }
+
     return (
         <div className="space-y-4">
-            <PageHeader title="AI Jobs" subtitle="Queue control with audit trail and strict permissions." />
+            <PageHeader title="AI Jobs" subtitle="Queue control with audit trail and strict permissions."/>
 
             <SectionCard>
                 <DataTableToolbar
@@ -186,21 +205,21 @@ export default function AiJobsPage() {
                             key: "status",
                             label: "Status",
                             value: status,
-                            onChange: (v) => setStatus(v),
+                            onChange: (v) => write({ page: 1, search: v }),
                             options: [
-                                { label: "Queued", value: "queued" },
-                                { label: "Running", value: "running" },
-                                { label: "Paused", value: "paused" },
-                                { label: "Failed", value: "failed" },
-                                { label: "Completed", value: "completed" },
-                                { label: "Canceled", value: "canceled" },
+                                {label: "Queued", value: "queued"},
+                                {label: "Running", value: "running"},
+                                {label: "Paused", value: "paused"},
+                                {label: "Failed", value: "failed"},
+                                {label: "Completed", value: "completed"},
+                                {label: "Canceled", value: "canceled"},
                             ],
                         },
                     ]}
                     right={
                         <button
                             className="rounded-xl px-3 py-2 text-sm font-medium"
-                            style={{ border: "1px solid rgb(var(--border))", background: "rgb(var(--panel-2))" }}
+                            style={{border: "1px solid rgb(var(--border))", background: "rgb(var(--panel-2))"}}
                             onClick={load}
                         >
                             Refresh
@@ -209,13 +228,21 @@ export default function AiJobsPage() {
                 />
 
                 {loading ? (
-                    <DataTableState kind="loading" />
+                    <DataTableState kind="loading"/>
                 ) : err ? (
-                    <DataTableState kind="error" message={err} onRetry={load} />
+                    <DataTableState kind="error" message={err} onRetry={load}/>
                 ) : items.length === 0 ? (
-                    <DataTableState kind="empty" title="No jobs" subtitle="Try clearing filters." />
+                    <DataTableState kind="empty" title="No jobs" subtitle="Try clearing filters."/>
                 ) : (
-                    <DataTable columns={columns} data={items} />
+                    <>
+                        <DataTable columns={columns} data={items} sorting={sort} onSortingChange={onSortingChange}/>
+                        <DataTablePagination
+                            page={page}
+                            pageSize={pageSize}
+                            total={total}
+                            onPageChange={(p) => write({page: p})}
+                            onPageSizeChange={(s) => write({page: 1, pageSize: s})}/>
+                    </>
                 )}
             </SectionCard>
 

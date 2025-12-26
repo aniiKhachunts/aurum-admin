@@ -1,4 +1,4 @@
-import {type ReactElement, type ReactNode, isValidElement } from "react"
+import { cloneElement, isValidElement, type ReactElement, type ReactNode } from "react"
 import { useSessionStore } from "../lib/sessionStore"
 
 type Props = {
@@ -22,12 +22,18 @@ function hasPermission(role: string, permission: string) {
     return list.includes(permission)
 }
 
+type DisableableProps = {
+    disabled?: boolean
+    style?: React.CSSProperties
+    tabIndex?: number
+    ["aria-disabled"]?: boolean
+}
+
 export function Can({ permission, mode = "disable", reason, children }: Props) {
     const role = useSessionStore((s) => s.role)
     const allowed = hasPermission(role, permission)
 
     if (allowed) return <>{children}</>
-
     if (mode === "hide") return null
 
     if (!isValidElement(children)) {
@@ -41,9 +47,8 @@ export function Can({ permission, mode = "disable", reason, children }: Props) {
         )
     }
 
-    const el = children as ReactElement<any>
-    const disabled = true
-    const nextStyle = {
+    const el = children as ReactElement<DisableableProps>
+    const nextStyle: React.CSSProperties = {
         ...(el.props.style || {}),
         opacity: 0.55,
         cursor: "not-allowed",
@@ -52,16 +57,12 @@ export function Can({ permission, mode = "disable", reason, children }: Props) {
 
     return (
         <span title={reason || "No permission"} style={{ display: "inline-flex" }}>
-      {({
-          ...el,
-          props: {
-              ...el.props,
-              disabled: el.props.disabled ?? disabled,
-              "aria-disabled": true,
-              style: nextStyle,
-              tabIndex: -1,
-          },
-      } as any)}
+      {cloneElement(el, {
+          disabled: el.props.disabled ?? true,
+          "aria-disabled": true,
+          style: nextStyle,
+          tabIndex: -1,
+      })}
     </span>
     )
 }

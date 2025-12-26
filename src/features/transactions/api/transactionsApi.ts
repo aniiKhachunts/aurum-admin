@@ -1,4 +1,6 @@
 import { apiFetch } from "../../../shared/lib/apiClient"
+import type { SortingState } from "@tanstack/react-table"
+import { serializeSortParam } from "../../../shared/lib/tableUrlState"
 
 export type Tx = {
     id: string
@@ -18,11 +20,20 @@ export type TransactionsResponse = {
     total: number
 }
 
-export async function getTransactions(params: { page: number; pageSize: number; status: string }) {
+export async function getTransactions(params: {
+    page: number
+    pageSize: number
+    status: string
+    sort?: SortingState
+}) {
     const q = new URLSearchParams()
     q.set("page", String(params.page))
     q.set("pageSize", String(params.pageSize))
     if (params.status) q.set("status", params.status)
+
+    const sortValue = params.sort?.length ? serializeSortParam(params.sort) : ""
+    if (sortValue) q.set("sort", sortValue)
+
     return apiFetch<TransactionsResponse>(`/api/transactions?${q.toString()}`)
 }
 

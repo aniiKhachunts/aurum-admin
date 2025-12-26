@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { PageHeader } from "../shared/ui/PageHeader"
 import { SectionCard } from "../shared/ui/SectionCard"
-import { StatusPill } from "../shared/ui/StatusPill"
+import {StatusPill, type StatusTone} from "../shared/ui/StatusPill"
 import { DataTableState } from "../shared/ui/DataTable/DataTableStates"
 import { FormField } from "../shared/ui/FormField"
 import { Can } from "../shared/ui/Can"
@@ -12,12 +12,13 @@ import { WriteGuard } from "../shared/ui/WriteGuard"
 import { toast } from "../shared/ui/Toast/toast"
 import { formatApiError } from "../shared/lib/formatApiError"
 import { ConfirmDialog } from "../shared/ui/ConfirmDialog"
+import {getErrorMessage} from "../shared/lib/getErrorMessage.ts";
 
-function statusTone(s: string) {
-    if (s === "active") return "success"
-    if (s === "invited") return "info"
-    if (s === "suspended") return "warn"
-    if (s === "deactivated") return "danger"
+function statusTone(status: string): StatusTone {
+    if (status === "active") return "success"
+    if (status === "invited") return "info"
+    if (status === "suspended") return "warn"
+    if (status === "deactivated") return "danger"
     return "neutral"
 }
 
@@ -50,26 +51,29 @@ export default function UserDetailPage() {
         return item.name !== draft.name || item.role !== draft.role || JSON.stringify(item.tags) !== JSON.stringify(draft.tags)
     }, [item, draft])
 
-    async function load() {
-        if (!id) return
+    const load = useCallback(async () => {
+        if (!id) {
+            setErr("Invalid user id")
+            setLoading(false)
+            return
+        }
+
         setLoading(true)
         setErr(null)
         try {
             const res = await getUser(id)
             setItem(res.item)
             setDraft(res.item)
-        } catch (e: any) {
-            const msg = formatApiError(e)
-            setErr(msg)
-            toast.error("Failed to load user", msg)
+        } catch (e: unknown) {
+            setErr(getErrorMessage(e))
         } finally {
             setLoading(false)
         }
-    }
+    }, [id])
 
     useEffect(() => {
         load()
-    }, [id])
+    }, [load])
 
     async function onSave() {
         if (!id || !draft) return
@@ -81,7 +85,7 @@ export default function UserDetailPage() {
             setDraft(res.item)
             setEditMode(false)
             toast.success("User updated", id)
-        } catch (e: any) {
+        } catch (e: unknown) {
             const msg = formatApiError(e)
             setErr(msg)
             toast.error("Update failed", msg)
@@ -105,7 +109,7 @@ export default function UserDetailPage() {
             setDraft(res.item)
             setEditMode(false)
             toast.success("User suspended", id)
-        } catch (e: any) {
+        } catch (e: unknown) {
             const msg = formatApiError(e)
             setErr(msg)
             toast.error("Suspend failed", msg)
@@ -124,7 +128,7 @@ export default function UserDetailPage() {
             setDraft(res.item)
             setEditMode(false)
             toast.success("User deactivated", id)
-        } catch (e: any) {
+        } catch (e: unknown) {
             const msg = formatApiError(e)
             setErr(msg)
             toast.error("Deactivate failed", msg)
@@ -144,7 +148,7 @@ export default function UserDetailPage() {
                 subtitle={item.email}
                 actions={
                     <div className="flex items-center gap-2">
-                        <StatusPill label={item.status} tone={statusTone(item.status) as any} />
+                        <StatusPill label={item.status} tone={statusTone(item.status)} />
 
                         <button
                             className="rounded-xl px-3 py-2 text-sm"

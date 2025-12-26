@@ -12,7 +12,7 @@ export function ToastViewport() {
             }, 3500)
         )
         return () => timers.forEach((x) => window.clearTimeout(x))
-    }, [items.length])
+    }, [items, remove])
 
     return (
         <div className="fixed right-4 top-4 z-[100] flex w-[360px] flex-col gap-2">

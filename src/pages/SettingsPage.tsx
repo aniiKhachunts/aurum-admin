@@ -8,6 +8,10 @@ import {useSettingsStore} from "../shared/lib/settingsStore"
 import {WriteGuard} from "../shared/ui/WriteGuard.tsx";
 import {toast} from "../shared/ui/Toast/toast.ts";
 import {formatApiError} from "../shared/lib/formatApiError.ts";
+import {getErrorMessage} from "../shared/lib/getErrorMessage.ts";
+import type { AppSettings } from "../features/settings/api/settingsApi"
+
+type FeatureKey = keyof NonNullable<AppSettings["features"]>
 
 function Toggle({
                     checked,
@@ -50,32 +54,37 @@ function Toggle({
 }
 
 export default function SettingsPage() {
-    const store = useSettingsStore()
-    const s = store.settings
+    const s = useSettingsStore((st) => st.settings)
+    const loading = useSettingsStore((st) => st.loading)
+    const loaded = useSettingsStore((st) => st.loaded)
+    const storeError = useSettingsStore((st) => st.error)
+    const load = useSettingsStore((st) => st.load)
+    const setSettings = useSettingsStore((st) => st.setSettings)
+
     const [saving, setSaving] = useState(false)
     const [err, setErr] = useState<string | null>(null)
 
     useEffect(() => {
-        if (!store.loaded) store.load()
-    }, [store.loaded])
+        if (!loaded) load()
+    }, [loaded, load])
 
-    async function save(patch: any) {
+    async function save(patch: Partial<AppSettings>) {
         setSaving(true)
         setErr(null)
         try {
             const res = await updateSettings(patch)
-            store.setSettings(res.item)
+            setSettings(res.item)
             toast.success("Settings updated")
-        } catch (e: any) {
-            setErr(e?.message || "Error")
+        } catch (e: unknown) {
+            setErr(getErrorMessage(e))
             toast.error("Update failed", formatApiError(e))
         } finally {
             setSaving(false)
         }
     }
 
-    if (store.loading || !s) return <DataTableState kind="loading" label="Loading settings…"/>
-    if (store.error) return <DataTableState kind="error" message={store.error} onRetry={store.load}/>
+    if (loading || !s) return <DataTableState kind="loading" label="Loading settings…" />
+    if (storeError) return <DataTableState kind="error" message={storeError} onRetry={load} />
 
     return (
         <div className="space-y-4">
@@ -87,14 +96,16 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between">
                     <div>
                         <div className="text-sm font-medium">Maintenance mode</div>
-                        <div className="text-xs" style={{ color: "rgb(var(--muted))" }}>
+                        <div className="text-xs" style={{color: "rgb(var(--muted))"}}>
                             Disables write actions across the app.
                         </div>
                     </div>
 
                     <Can permission="settings:write" mode="disable" reason="No permission to change settings">
-                        <WriteGuard allowDuringMaintenance reason="Only settings changes are allowed during maintenance">
-                            <Toggle checked={s.maintenanceMode} disabled={saving} onChange={(v) => save({ maintenanceMode: v })} />
+                        <WriteGuard allowDuringMaintenance
+                                    reason="Only settings changes are allowed during maintenance">
+                            <Toggle checked={s.maintenanceMode} disabled={saving}
+                                    onChange={(v) => save({maintenanceMode: v})}/>
                         </WriteGuard>
                     </Can>
                 </div>
@@ -112,11 +123,12 @@ export default function SettingsPage() {
                             <div className="text-sm">{label}</div>
 
                             <Can permission="settings:write" mode="disable" reason="No permission to change settings">
-                                <WriteGuard allowDuringMaintenance reason="Only settings changes are allowed during maintenance">
+                                <WriteGuard allowDuringMaintenance
+                                            reason="Only settings changes are allowed during maintenance">
                                     <Toggle
-                                        checked={Boolean((s.features as any)[key])}
+                                        checked={Boolean(s.features[key as FeatureKey])}
                                         disabled={saving}
-                                        onChange={(v) => save({ features: { ...s.features, [key]: v } })}
+                                        onChange={(v) => save({features: {...s.features, [key as FeatureKey]: v}})}
                                     />
                                 </WriteGuard>
                             </Can>
@@ -141,10 +153,12 @@ export default function SettingsPage() {
                                 className="w-full rounded-xl px-3 py-2 text-sm"
                                 style={{background: "rgb(var(--panel))", border: "1px solid rgb(var(--border))"}}
                                 value={String(s.controls.supportRefundLimit)}
-                                onChange={(e) => store.setSettings({
-                                    ...s,
-                                    controls: {...s.controls, supportRefundLimit: Number(e.target.value || 0)}
-                                })}
+                                onChange={(e) =>
+                                    setSettings({
+                                        ...s,
+                                        controls: { ...s.controls, supportRefundLimit: Number(e.target.value || 0) },
+                                    })
+                                }
                             />
                             <Can permission="settings:write" mode="disable" reason="No permission to change settings">
                                 <WriteGuard allowDuringMaintenance
@@ -162,11 +176,10 @@ export default function SettingsPage() {
                                             save({
                                                 controls: {
                                                     ...s.controls,
-                                                    maxAiConcurrentRuns: s.controls.maxAiConcurrentRuns,
+                                                    supportRefundLimit: s.controls.supportRefundLimit,
                                                 },
                                             })
                                         }
-
                                     >
                                         Save
                                     </button>
@@ -188,18 +201,32 @@ export default function SettingsPage() {
                                 className="w-full rounded-xl px-3 py-2 text-sm"
                                 style={{background: "rgb(var(--panel))", border: "1px solid rgb(var(--border))"}}
                                 value={String(s.controls.maxAiConcurrentRuns)}
-                                onChange={(e) => store.setSettings({
-                                    ...s,
-                                    controls: {...s.controls, maxAiConcurrentRuns: Number(e.target.value || 0)}
-                                })}
+                                onChange={(e) =>
+                                    setSettings({
+                                        ...s,
+                                        controls: { ...s.controls, maxAiConcurrentRuns: Number(e.target.value || 0) },
+                                    })
+                                }
                             />
                             <Can permission="settings:write" mode="disable" reason="No permission to change settings">
-                                <WriteGuard allowDuringMaintenance reason="Only settings changes are allowed during maintenance">
+                                <WriteGuard allowDuringMaintenance
+                                            reason="Only settings changes are allowed during maintenance">
                                     <button
                                         className="rounded-xl px-3 py-2 text-sm font-medium"
-                                        style={{ background: "rgb(var(--brand))", color: "white", opacity: saving ? 0.6 : 1 }}
+                                        style={{
+                                            background: "rgb(var(--brand))",
+                                            color: "white",
+                                            opacity: saving ? 0.6 : 1
+                                        }}
                                         disabled={saving}
-                                        onClick={() => save({ controls: { ...s.controls, supportRefundLimit: s.controls.supportRefundLimit } })}
+                                        onClick={() =>
+                                            save({
+                                                controls: {
+                                                    ...s.controls,
+                                                    maxAiConcurrentRuns: s.controls.maxAiConcurrentRuns,
+                                                },
+                                            })
+                                        }
                                     >
                                         Save
                                     </button>
