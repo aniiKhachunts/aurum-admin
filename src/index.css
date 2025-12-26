@@ -1,0 +1,26 @@
+@import "tailwindcss";
+@import "./shared/styles/tokens.css";
+
+html, body, #root {
+    height: 100%;
+}
+
+body {
+    background: rgb(var(--bg));
+    color: rgb(var(--text));
+}
+
+:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+.u-panel {
+    background: rgb(var(--panel));
+    border: 1px solid rgb(var(--border));
+    border-radius: var(--r-md);
+    box-shadow: var(--sh-sm);
+}
+
+.u-muted {
+    color: rgb(var(--muted));
+}
