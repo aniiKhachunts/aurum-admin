@@ -1,7 +1,6 @@
 import {useCallback, useEffect, useMemo, useState} from "react"
 import type {ColumnDef, OnChangeFn, SortingState} from "@tanstack/react-table"
 import {Link} from "react-router-dom"
-import {PageHeader} from "../shared/ui/PageHeader"
 import {SectionCard} from "../shared/ui/SectionCard"
 import {DataTable} from "../shared/ui/DataTable/DataTable"
 import {DataTableState} from "../shared/ui/DataTable/DataTableStates"
@@ -16,6 +15,18 @@ import {ConfirmDialog} from "../shared/ui/ConfirmDialog.tsx";
 import {getErrorMessage} from "../shared/lib/getErrorMessage.ts";
 import {useTableQueryState} from "../shared/hooks/useTableQueryState.ts";
 import {DataTablePagination} from "../shared/ui/DataTable/DataTablePagination.tsx";
+import {Header} from "../shared/ui/Header.tsx";
+import {StatusPill} from "../shared/ui/StatusPill.tsx";
+
+function jobStatusTone(status: string) {
+    if (status === "Running") return "info"
+    if (status === "Queued") return "warn"
+    if (status === "Paused") return "neutral"
+    if (status === "Failed") return "danger"
+    if (status === "Completed") return "success"
+    if (status === "Canceled") return "neutral"
+    return "neutral"
+}
 
 export default function AiJobsPage() {
     const [items, setItems] = useState<AiJob[]>([])
@@ -100,21 +111,12 @@ export default function AiJobsPage() {
                 header: "Status",
                 accessorKey: "status",
                 cell: (ctx) => {
-                    const s = String(ctx.getValue())
-                    return (
-                        <span
-                            className="rounded-full px-2 py-1 text-xs"
-                            style={{
-                                border: "1px solid rgb(var(--border))",
-                                background: "rgb(var(--panel-2))",
-                                color: "rgb(var(--text))",
-                            }}
-                        >
-              {s}
-            </span>
-                    )
+                    const v = String(ctx.getValue() ?? "")
+                    return <StatusPill label={v}
+                                       tone={jobStatusTone(v) as "success" | "info" | "warn" | "danger" | "neutral"}/>
                 },
             },
+
             {
                 header: "Updated",
                 accessorKey: "updatedAt",
@@ -125,9 +127,9 @@ export default function AiJobsPage() {
                 cell: (ctx) => {
                     const j = ctx.row.original
                     const busy = actingId === j.id
-                    const canStart = j.status === "queued" || j.status === "paused" || j.status === "failed"
-                    const canPause = j.status === "running"
-                    const canCancel = j.status !== "completed" && j.status !== "canceled"
+                    const canStart = j.status === "Queued" || j.status === "Paused" || j.status === "Failed"
+                    const canPause = j.status === "Running"
+                    const canCancel = j.status !== "Completed" && j.status !== "Canceled"
 
                     return (
                         <div className="flex items-center gap-2">
@@ -196,8 +198,7 @@ export default function AiJobsPage() {
 
     return (
         <div className="space-y-4">
-            <PageHeader title="AI Jobs" subtitle="Queue control with audit trail and strict permissions."/>
-
+            <Header/>
             <SectionCard>
                 <DataTableToolbar
                     filters={[
@@ -205,14 +206,14 @@ export default function AiJobsPage() {
                             key: "status",
                             label: "Status",
                             value: status,
-                            onChange: (v) => write({ page: 1, search: v }),
+                            onChange: (v) => write({page: 1, search: v}),
                             options: [
-                                {label: "Queued", value: "queued"},
-                                {label: "Running", value: "running"},
-                                {label: "Paused", value: "paused"},
-                                {label: "Failed", value: "failed"},
-                                {label: "Completed", value: "completed"},
-                                {label: "Canceled", value: "canceled"},
+                                {label: "Queued", value: "Queued"},
+                                {label: "Running", value: "Running"},
+                                {label: "Paused", value: "Paused"},
+                                {label: "Failed", value: "Failed"},
+                                {label: "Completed", value: "Completed"},
+                                {label: "Canceled", value: "Canceled"},
                             ],
                         },
                     ]}
@@ -240,8 +241,9 @@ export default function AiJobsPage() {
                             page={page}
                             pageSize={pageSize}
                             total={total}
-                            onPageChange={(p) => write({page: p})}
-                            onPageSizeChange={(s) => write({page: 1, pageSize: s})}/>
+                            onPageChange={(p) => write({ page: p })}
+                            onPageSizeChange={(s) => write({ page: 1, pageSize: s })}
+                        />
                     </>
                 )}
             </SectionCard>

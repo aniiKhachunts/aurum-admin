@@ -16,17 +16,15 @@ const ROLE_PERMS: Record<string, string[]> = {
     viewer: ["users:read", "orgs:read", "transactions:read", "ai:read", "audit:read"],
 }
 
+export function useCan(permission: string) {
+    const role = useSessionStore((s) => s.role)
+    return hasPermission(role, permission)
+}
+
 function hasPermission(role: string, permission: string) {
     const list = ROLE_PERMS[role] || []
     if (list.includes("*")) return true
     return list.includes(permission)
-}
-
-type DisableableProps = {
-    disabled?: boolean
-    style?: React.CSSProperties
-    tabIndex?: number
-    ["aria-disabled"]?: boolean
 }
 
 export function Can({ permission, mode = "disable", reason, children }: Props) {
@@ -36,33 +34,51 @@ export function Can({ permission, mode = "disable", reason, children }: Props) {
     if (allowed) return <>{children}</>
     if (mode === "hide") return null
 
+    const title = reason || "No permission"
+
     if (!isValidElement(children)) {
         return (
             <span
-                title={reason || "No permission"}
+                title={title}
                 style={{ opacity: 0.55, cursor: "not-allowed", pointerEvents: "none", display: "inline-flex" }}
             >
-        {children}
-      </span>
+                {children}
+            </span>
         )
     }
 
-    const el = children as ReactElement<DisableableProps>
-    const nextStyle: React.CSSProperties = {
-        ...(el.props.style || {}),
-        opacity: 0.55,
-        cursor: "not-allowed",
-        pointerEvents: "none",
+    const el = children as ReactElement<any>
+    const isDomElement = typeof el.type === "string"
+
+    if (isDomElement) {
+        return (
+            <span title={title} style={{ display: "inline-flex" }}>
+                {cloneElement(el, {
+                    disabled: el.props.disabled ?? true,
+                    "aria-disabled": true,
+                    tabIndex: -1,
+                    style: {
+                        ...(el.props.style || {}),
+                        opacity: 0.55,
+                        cursor: "not-allowed",
+                    },
+                })}
+            </span>
+        )
     }
 
     return (
-        <span title={reason || "No permission"} style={{ display: "inline-flex" }}>
-      {cloneElement(el, {
-          disabled: el.props.disabled ?? true,
-          "aria-disabled": true,
-          style: nextStyle,
-          tabIndex: -1,
-      })}
-    </span>
+        <span
+            title={title}
+            style={{
+                opacity: 0.55,
+                cursor: "not-allowed",
+                pointerEvents: "none",
+                display: "inline-flex",
+            }}
+            aria-disabled="true"
+        >
+            {children}
+        </span>
     )
 }

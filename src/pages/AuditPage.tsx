@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import type { ColumnDef } from "@tanstack/react-table"
 import { Link, useNavigate } from "react-router-dom"
-import { PageHeader } from "../shared/ui/PageHeader"
 import { SectionCard } from "../shared/ui/SectionCard"
 import { DataTable } from "../shared/ui/DataTable/DataTable"
 import { DataTableState } from "../shared/ui/DataTable/DataTableStates"
@@ -10,6 +9,7 @@ import { getAuditEvents, type AuditEvent } from "../features/audit/api/auditApi"
 import { getAuditEntityHref } from "../features/audit/lib/auditLinks"
 import { AuditEventDialog } from "../features/audit/ui/AuditEventDialog"
 import { getErrorMessage } from "../shared/lib/getErrorMessage"
+import {Header} from "../shared/ui/Header.tsx";
 
 function uniqSorted(arr: string[]) {
     return Array.from(new Set(arr.filter(Boolean))).sort((a, b) => a.localeCompare(b))
@@ -21,7 +21,7 @@ function titleizeAction(a: string) {
         "users.update": "Users · Update",
         "users.suspend": "Users · Suspend",
         "users.deactivate": "Users · Deactivate",
-        "transactions.refund": "Transactions · Refund",
+        "Transactions.Refund": "Transactions · Refund",
         "ai_jobs.start": "AI Jobs · Start",
         "ai_jobs.pause": "AI Jobs · Pause",
         "ai_jobs.cancel": "AI Jobs · Cancel",
@@ -166,7 +166,7 @@ export default function AuditPage() {
 
     return (
         <div className="space-y-4">
-            <PageHeader title="Audit" subtitle="System-wide activity and traceability." />
+            <Header />
 
             <SectionCard>
                 <DataTableToolbar

@@ -1,7 +1,6 @@
 import {useCallback, useEffect, useMemo, useState} from "react"
 import type { ColumnDef, OnChangeFn, SortingState } from "@tanstack/react-table"
 import { Link } from "react-router-dom"
-import { PageHeader } from "../shared/ui/PageHeader"
 import { SectionCard } from "../shared/ui/SectionCard"
 import { StatusPill } from "../shared/ui/StatusPill"
 import { DataTable } from "../shared/ui/DataTable/DataTable"
@@ -11,12 +10,13 @@ import { DataTableState } from "../shared/ui/DataTable/DataTableStates"
 import { getUsers, type User } from "../features/users/api/usersApi"
 import { useTableQueryState } from "../shared/hooks/useTableQueryState"
 import {getErrorMessage} from "../shared/lib/getErrorMessage.ts";
+import {Header} from "../shared/ui/Header.tsx";
 
 function tone(status: string) {
-    if (status === "active") return "success"
-    if (status === "invited") return "info"
-    if (status === "suspended") return "warn"
-    if (status === "deactivated") return "danger"
+    if (status === "Active") return "success"
+    if (status === "Invited") return "info"
+    if (status === "Suspended") return "warn"
+    if (status === "Deactivated") return "danger"
     return "neutral"
 }
 
@@ -92,8 +92,7 @@ export default function UsersPage() {
 
     return (
         <div className="space-y-4">
-            <PageHeader title="Users" subtitle="Filter, sort, paginate, and test error/loading states." />
-
+            <Header />
             <SectionCard>
                 <DataTableToolbar
                     search={{
@@ -111,10 +110,10 @@ export default function UsersPage() {
                                 setStatus(v)
                             },
                             options: [
-                                { label: "Active", value: "active" },
-                                { label: "Invited", value: "invited" },
-                                { label: "Suspended", value: "suspended" },
-                                { label: "Deactivated", value: "deactivated" },
+                                { label: "Active", value: "Active" },
+                                { label: "Invited", value: "Invited" },
+                                { label: "Suspended", value: "Suspended" },
+                                { label: "Deactivated", value: "Deactivated" },
                             ],
                         },
                     ]}

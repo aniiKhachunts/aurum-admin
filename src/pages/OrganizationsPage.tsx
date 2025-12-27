@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react"
 import type {ColumnDef} from "@tanstack/react-table"
-import { PageHeader } from "../shared/ui/PageHeader"
 import { SectionCard } from "../shared/ui/SectionCard"
 import { DataTable } from "../shared/ui/DataTable/DataTable"
 import { DataTableState } from "../shared/ui/DataTable/DataTableStates"
 import { getOrganizations, type Org } from "../features/organizations/api/orgsApi"
+import {Header} from "../shared/ui/Header.tsx";
 
 export default function OrganizationsPage() {
     const [items, setItems] = useState<Org[]>([])
@@ -52,7 +52,7 @@ export default function OrganizationsPage() {
 
     return (
         <div className="space-y-4">
-            <PageHeader title="Organizations" subtitle="Read-only overview of orgs." />
+            <Header />
 
             <SectionCard>
                 {loading ? (

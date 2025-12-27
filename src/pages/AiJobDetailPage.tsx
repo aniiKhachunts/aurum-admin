@@ -1,27 +1,20 @@
-import {useCallback, useEffect, useMemo, useState} from "react"
-import {useNavigate, useParams} from "react-router-dom"
-import {PageHeader} from "../shared/ui/PageHeader"
-import {SectionCard} from "../shared/ui/SectionCard"
-import {DataTableState} from "../shared/ui/DataTable/DataTableStates"
-import {ProgressBar} from "../shared/ui/ProgressBar"
-import {AuditLogPanel} from "../shared/ui/AuditLogPanel"
-import {Can} from "../shared/ui/Can"
-import {WriteGuard} from "../shared/ui/WriteGuard"
-import {
-    getAiJob,
-    startAiJob,
-    pauseAiJob,
-    cancelAiJob,
-    type AiJobWithRuns,
-    type AiJobRun
-} from "../features/ai-jobs/api/aiJobsApi"
-import {toast} from "../shared/ui/Toast/toast"
-import {formatApiError} from "../shared/lib/formatApiError"
-import {ConfirmDialog} from "../shared/ui/ConfirmDialog.tsx";
-import {getErrorMessage} from "../shared/lib/getErrorMessage.ts";
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
+import { Header } from "../shared/ui/Header"
+import { SectionCard } from "../shared/ui/SectionCard"
+import { DataTableState } from "../shared/ui/DataTable/DataTableStates"
+import { ProgressBar } from "../shared/ui/ProgressBar"
+import { AuditLogPanel } from "../shared/ui/AuditLogPanel"
+import { Can } from "../shared/ui/Can"
+import { WriteGuard } from "../shared/ui/WriteGuard"
+import { ConfirmDialog } from "../shared/ui/ConfirmDialog"
+import { toast } from "../shared/ui/Toast/toast"
+import { formatApiError } from "../shared/lib/formatApiError"
+import { getErrorMessage } from "../shared/lib/getErrorMessage"
+import { cancelAiJob, getAiJob, pauseAiJob, startAiJob, type AiJobRun, type AiJobWithRuns } from "../features/ai-jobs/api/aiJobsApi"
 
 export default function AiJobDetailPage() {
-    const { id = "" } = useParams()
+    const { id } = useParams()
     const navigate = useNavigate()
 
     const [item, setItem] = useState<AiJobWithRuns | null>(null)
@@ -31,10 +24,15 @@ export default function AiJobDetailPage() {
     const [confirmCancel, setConfirmCancel] = useState(false)
 
     const load = useCallback(async () => {
+        if (!id) {
+            setErr("Invalid job id")
+            setLoading(false)
+            return
+        }
+
         setLoading(true)
         setErr(null)
         try {
-            if (!id) return
             const res = await getAiJob(id)
             setItem(res.item)
         } catch (e: unknown) {
@@ -50,58 +48,75 @@ export default function AiJobDetailPage() {
         load()
     }, [load])
 
-    async function act(kind: "start" | "pause" | "cancel") {
-        if (!id) return
-        setActing(true)
-        setErr(null)
+    const canStart = useMemo(() => item && (item.status === "Queued" || item.status === "Paused" || item.status === "Failed"), [item])
+    const canPause = useMemo(() => item && item.status === "Running", [item])
+    const canCancel = useMemo(() => item && item.status !== "Completed" && item.status !== "Canceled", [item])
 
-        try {
-            const res =
-                kind === "start"
-                    ? await startAiJob(id)
-                    : kind === "pause"
-                        ? await pauseAiJob(id)
-                        : await cancelAiJob(id)
+    const act = useCallback(
+        async (kind: "start" | "pause" | "cancel") => {
+            if (!id) return
+            setActing(true)
+            setErr(null)
+            try {
+                const res =
+                    kind === "start"
+                        ? await startAiJob(id)
+                        : kind === "pause"
+                            ? await pauseAiJob(id)
+                            : await cancelAiJob(id)
 
-            setItem(res.item)
+                setItem(res.item)
 
-            const title =
-                kind === "start" ? "Job started" : kind === "pause" ? "Job paused" : "Job canceled"
+                const title = kind === "start" ? "Job started" : kind === "pause" ? "Job paused" : "Job canceled"
+                toast.success(title, id)
+            } catch (e: unknown) {
+                const msg = getErrorMessage(e)
+                setErr(msg)
+                toast.error("Action failed", msg)
+            } finally {
+                setActing(false)
+            }
+        },
+        [id]
+    )
 
-            toast.success(title, id)
-        } catch (e: unknown) {
-            const msg = getErrorMessage(e)
-            setErr(msg)
-            toast.error("Action failed", msg)
-        } finally {
-            setActing(false)
-        }
+    if (loading) {
+        return (
+            <div className="space-y-4">
+                <Header title="AI Job" subtitle="Loading…" />
+                <DataTableState kind="loading" label="Loading job…" />
+            </div>
+        )
     }
 
-    const canStart = useMemo(
-        () => item && (item.status === "queued" || item.status === "paused" || item.status === "failed"),
-        [item]
-    )
-    const canPause = useMemo(() => item && item.status === "running", [item])
-    const canCancel = useMemo(
-        () => item && item.status !== "completed" && item.status !== "canceled",
-        [item]
-    )
+    if (err) {
+        return (
+            <div className="space-y-4">
+                <Header title="AI Job" subtitle="Error" actions={<button className="rounded-xl px-3 py-2 text-sm" style={{ border: "1px solid rgb(var(--border))", background: "rgb(var(--panel))" }} onClick={load}>Retry</button>} />
+                <DataTableState kind="error" message={err} onRetry={load} />
+            </div>
+        )
+    }
 
-    if (loading) return <DataTableState kind="loading" label="Loading job…"/>
-    if (err) return <DataTableState kind="error" message={err} onRetry={load}/>
-    if (!item) return <DataTableState kind="empty" title="Job not found"/>
+    if (!item) {
+        return (
+            <div className="space-y-4">
+                <Header title="AI Job" subtitle="Not found" />
+                <DataTableState kind="empty" title="Job not found" />
+            </div>
+        )
+    }
 
     return (
         <div className="space-y-4">
-            <PageHeader
+            <Header
                 title={item.name}
                 subtitle={`${item.dataset} · ${item.model}`}
                 actions={
                     <div className="flex items-center gap-2">
                         <button
                             className="rounded-xl px-3 py-2 text-sm"
-                            style={{border: "1px solid rgb(var(--border))", background: "rgb(var(--panel))"}}
+                            style={{ border: "1px solid rgb(var(--border))", background: "rgb(var(--panel))" }}
                             onClick={() => navigate("/ai-jobs")}
                         >
                             Back
@@ -145,11 +160,7 @@ export default function AiJobDetailPage() {
                             <WriteGuard reason="Maintenance mode: write actions are disabled">
                                 <button
                                     className="rounded-xl px-3 py-2 text-sm font-medium"
-                                    style={{
-                                        background: "rgb(var(--danger))",
-                                        color: "white",
-                                        opacity: !canCancel || acting ? 0.6 : 1,
-                                    }}
+                                    style={{ background: "rgb(var(--danger))", color: "white", opacity: !canCancel || acting ? 0.6 : 1 }}
                                     disabled={!canCancel || acting}
                                     onClick={() => setConfirmCancel(true)}
                                 >
@@ -165,72 +176,82 @@ export default function AiJobDetailPage() {
                 <div className="space-y-4">
                     <SectionCard title="Overview" description="Current status, progress and budgets">
                         <div className="grid gap-4 md:grid-cols-2">
-                            <Info label="Status" value={item.status}/>
-                            <Info label="Priority" value={item.priority}/>
+                            <Info label="Status" value={item.status} />
+                            <Info label="Priority" value={item.priority} />
                             <div>
-                                <div className="text-xs" style={{color: "rgb(var(--muted))"}}>Progress</div>
+                                <div className="text-xs" style={{ color: "rgb(var(--muted))" }}>
+                                    Progress
+                                </div>
                                 <div className="mt-2">
-                                    <ProgressBar value={Number(item.progress)}/>
+                                    <ProgressBar value={Number(item.progress)} />
                                 </div>
                             </div>
-                            <Info label="Cost cap" value={`$${Number(item.costCapUsd).toFixed(0)}`}/>
-                            <Info label="Token budget" value={Number(item.tokensBudget).toLocaleString()}/>
-                            <Info label="Updated" value={new Date(item.updatedAt).toLocaleString()}/>
+                            <Info label="Cost cap" value={`$${Number(item.costCapUsd).toFixed(0)}`} />
+                            <Info label="Token budget" value={Number(item.tokensBudget).toLocaleString()} />
+                            <Info label="Updated" value={new Date(item.updatedAt).toLocaleString()} />
                         </div>
                     </SectionCard>
 
                     <SectionCard title="Runs" description="Execution attempts and outcomes">
-                        <div className="space-y-3">
-                            {item.runs?.map((r: AiJobRun) => (
-                                <div
-                                    key={r.id}
-                                    className="rounded-xl p-3"
-                                    style={{background: "rgb(var(--panel-2))", border: "1px solid rgb(var(--border))"}}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <div className="text-xs font-semibold">{r.id}</div>
-                                        <div className="text-[11px]" style={{color: "rgb(var(--muted))"}}>
-                                            {r.outcome || "in_progress"}
+                        {item.runs?.length ? (
+                            <div className="space-y-3">
+                                {item.runs.map((r: AiJobRun) => (
+                                    <div
+                                        key={r.id}
+                                        className="rounded-xl p-3"
+                                        style={{ background: "rgb(var(--panel-2))", border: "1px solid rgb(var(--border))" }}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div className="text-xs font-semibold">{r.id}</div>
+                                            <div className="text-[11px]" style={{ color: "rgb(var(--muted))" }}>
+                                                {r.outcome || "in_progress"}
+                                            </div>
+                                        </div>
+                                        <div className="mt-1 text-[11px]" style={{ color: "rgb(var(--muted))" }}>
+                                            {new Date(r.startedAt).toLocaleString()}
                                         </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-sm" style={{ color: "rgb(var(--muted))" }}>
+                                No runs yet.
+                            </div>
+                        )}
                     </SectionCard>
                 </div>
 
-                <ConfirmDialog
-                    open={confirmCancel}
-                    title="Cancel this job?"
-                    description={item ? `Cancel ${item.name} (${item.id}).` : ""}
-                    confirmText="Cancel job"
-                    cancelText="Keep running"
-                    danger
-                    requireText={item?.id}
-                    busy={acting}
-                    onClose={() => setConfirmCancel(false)}
-                    onConfirm={async () => {
-                        await act("cancel")
-                        setConfirmCancel(false)
-                    }}
-                />
-
-                <AuditLogPanel entityType="ai_job" entityId={item.id} title="Audit events"/>
+                <div className="space-y-4">
+                    <AuditLogPanel entityType="ai_job" entityId={item.id} title="Audit events" />
+                </div>
             </div>
+
+            <ConfirmDialog
+                open={confirmCancel}
+                title="Cancel this job?"
+                description={`Cancel ${item.name} (${item.id}).`}
+                confirmText="Cancel job"
+                cancelText="Keep running"
+                danger
+                requireText={item.id}
+                busy={acting}
+                onClose={() => setConfirmCancel(false)}
+                onConfirm={async () => {
+                    await act("cancel")
+                    setConfirmCancel(false)
+                }}
+            />
         </div>
     )
 }
 
-function Info({label, value}: { label: string; value: unknown }) {
+function Info({ label, value }: { label: string; value: unknown }) {
     return (
         <div>
-            <div className="text-xs" style={{color: "rgb(var(--muted))"}}>
+            <div className="text-xs" style={{ color: "rgb(var(--muted))" }}>
                 {label}
             </div>
-            <div
-                className="mt-1 text-sm font-semibold">
-                {typeof value === "string" || typeof value === "number" ? value : String(value ?? "")}
-            </div>
+            <div className="mt-1 text-sm font-semibold">{typeof value === "string" || typeof value === "number" ? value : String(value ?? "")}</div>
         </div>
     )
 }

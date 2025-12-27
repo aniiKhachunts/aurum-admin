@@ -1,9 +1,9 @@
-import { PageHeader } from "../../../shared/ui/PageHeader"
 import { SectionCard } from "../../../shared/ui/SectionCard"
 import { StatusPill } from "../../../shared/ui/StatusPill"
 import { Can } from "../../../shared/ui/Can"
 import { useSessionStore } from "../../../shared/lib/sessionStore"
-import { can, roleLabel, type Permission } from "../../../shared/lib/permissions"
+import { can, type Permission } from "../../../shared/lib/permissions"
+import {Header} from "../../../shared/ui/Header.tsx";
 
 const checks: { label: string; permission: Permission }[] = [
     { label: "Read Users", permission: "users:read" },
@@ -23,11 +23,7 @@ export default function PermissionsPlaygroundPage() {
 
     return (
         <div className="space-y-4">
-            <PageHeader
-                title="Permissions Playground"
-                subtitle="Switch roles from the top bar and verify what changes."
-                actions={<StatusPill label={roleLabel(role)} tone="info" />}
-            />
+            <Header />
 
             <SectionCard title="Permission Matrix (Live)">
                 <div className="grid gap-2 sm:grid-cols-2">

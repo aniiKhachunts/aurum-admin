@@ -20,7 +20,7 @@ const lastNames = ["Khachunts", "Petrosyan", "Hakobyan", "Smith", "Brown", "Tayl
 
 const tagsPool = ["vip", "kyc", "high-risk", "trial", "priority", "enterprise", "beta"]
 
-const jobStatuses: AiJobStatus[] = ["queued", "running", "paused", "failed", "completed", "canceled"]
+const jobStatuses: AiJobStatus[] = ["Queued", "Running", "Paused", "Failed", "Completed", "Canceled"]
 
 export type SeedDb = {
     orgs: SeedOrg[]
@@ -60,7 +60,7 @@ export function generateSeed(): SeedDb {
     ]
 
     const roles: SeedRole[] = ["owner", "admin", "analyst", "support", "viewer"]
-    const statuses: SeedUserStatus[] = ["active", "active", "active", "invited", "suspended", "deactivated"]
+    const statuses: SeedUserStatus[] = ["Active", "Active", "Active", "Invited", "Suspended", "Deactivated"]
 
     const users: SeedUser[] = Array.from({length: 64}).map((_, i) => {
         const fn = pick(firstNames)
@@ -117,10 +117,10 @@ export function generateSeed(): SeedDb {
         const createdAgo = 2 + Math.floor(Math.random() * 60)
         const updatedAgo = Math.floor(Math.random() * 8)
         const progress =
-            status === "completed" ? 100 : status === "failed" || status === "canceled" ? 100 : Math.floor(Math.random() * 95)
+            status === "Completed" ? 100 : status === "Failed" || status === "Canceled" ? 100 : Math.floor(Math.random() * 95)
 
         const startedAt = isoDaysAgo(createdAgo - 1)
-        const endedAt = status === "running" || status === "queued" || status === "paused" ? undefined : isoDaysAgo(updatedAgo)
+        const endedAt = status === "Running" || status === "Queued" || status === "Paused" ? undefined : isoDaysAgo(updatedAgo)
 
         return {
             id: id("job", i + 1),
@@ -164,7 +164,7 @@ export function generateSeed(): SeedDb {
             createdAt: isoDaysAgo(Math.floor(Math.random() * 30)),
             actorId: actor.id,
             actorRole: actor.role,
-            action: pick(["created", "updated", "started", "paused", "canceled", "refunded"] as const),
+            action: pick(["Created", "Updated", "Started", "Paused", "Canceled", "Refunded"] as const),
             entityType,
             entityId,
             meta: {source: "seed"},

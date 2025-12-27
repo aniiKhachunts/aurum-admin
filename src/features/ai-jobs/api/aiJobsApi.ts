@@ -1,6 +1,6 @@
-import { apiFetch } from "../../../shared/lib/apiClient"
-import type { SortingState } from "@tanstack/react-table"
-import { serializeSortParam } from "../../../shared/lib/tableUrlState"
+import {apiFetch} from "../../../shared/lib/apiClient"
+import type {SortingState} from "@tanstack/react-table"
+import {serializeSortParam} from "../../../shared/lib/tableUrlState"
 
 export type AiJobRun = {
     id: string
@@ -11,7 +11,7 @@ export type AiJobRun = {
 export type AiJob = {
     id: string
     name: string
-    status: "queued" | "running" | "paused" | "failed" | "completed" | "canceled"
+    status: "Queued" | "Running" | "Paused" | "Failed" | "Completed" | "Canceled"
     model: string
     priority: string
     progress: number
@@ -47,7 +47,13 @@ export async function getAiJobs(params: {
     const sortValue = params.sort?.length ? serializeSortParam(params.sort) : ""
     if (sortValue) q.set("sort", sortValue)
 
-    return apiFetch<AiJobsResponse>(`/api/ai/jobs?${q.toString()}`)
+    return apiFetch<
+        {
+            items: AiJob[];
+            page: number;
+            pageSize: number;
+            total: number
+        }>(`/api/ai/jobs?${q.toString()}`)
 }
 
 export async function getAiJob(id: string) {
@@ -55,13 +61,13 @@ export async function getAiJob(id: string) {
 }
 
 export async function startAiJob(id: string) {
-    return apiFetch<{ item: AiJobWithRuns }>(`/api/ai/jobs/${id}/start`, { method: "POST" })
+    return apiFetch<{ item: AiJobWithRuns }>(`/api/ai/jobs/${id}/start`, {method: "POST"})
 }
 
 export async function pauseAiJob(id: string) {
-    return apiFetch<{ item: AiJobWithRuns }>(`/api/ai/jobs/${id}/pause`, { method: "POST" })
+    return apiFetch<{ item: AiJobWithRuns }>(`/api/ai/jobs/${id}/pause`, {method: "POST"})
 }
 
 export async function cancelAiJob(id: string) {
-    return apiFetch<{ item: AiJobWithRuns }>(`/api/ai/jobs/${id}/cancel`, { method: "POST" })
+    return apiFetch<{ item: AiJobWithRuns }>(`/api/ai/jobs/${id}/cancel`, {method: "POST"})
 }

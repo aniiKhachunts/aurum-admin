@@ -1,5 +1,4 @@
 import {useEffect, useState} from "react"
-import {PageHeader} from "../shared/ui/PageHeader"
 import {SectionCard} from "../shared/ui/SectionCard"
 import {DataTableState} from "../shared/ui/DataTable/DataTableStates"
 import {Can} from "../shared/ui/Can"
@@ -10,6 +9,7 @@ import {toast} from "../shared/ui/Toast/toast.ts";
 import {formatApiError} from "../shared/lib/formatApiError.ts";
 import {getErrorMessage} from "../shared/lib/getErrorMessage.ts";
 import type { AppSettings } from "../features/settings/api/settingsApi"
+import {Header} from "../shared/ui/Header.tsx";
 
 type FeatureKey = keyof NonNullable<AppSettings["features"]>
 
@@ -88,7 +88,7 @@ export default function SettingsPage() {
 
     return (
         <div className="space-y-4">
-            <PageHeader title="Settings" subtitle="Feature flags and operational controls."/>
+            <Header />
 
             {err ? <div className="text-sm" style={{color: "rgb(var(--danger))"}}>{err}</div> : null}
 

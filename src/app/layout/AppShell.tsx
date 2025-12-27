@@ -1,13 +1,10 @@
 import {Link, NavLink, Outlet} from "react-router-dom"
-import {LayoutGrid, Users, Building2, CreditCard, Bot, Settings} from "lucide-react"
-import {RoleSwitcher} from "../../shared/ui/RoleSwitcher.tsx";
-import {useSessionStore} from "../../shared/lib/sessionStore.ts";
+import {LayoutGrid, Users, Building2, CreditCard, Bot, Settings, Shield, ClipboardList} from "lucide-react"
 import {DevToolsPanel} from "../../shared/ui/DevToolsPanel.tsx";
 import {MaintenanceBanner} from "../../shared/ui/MaintenanceBanner.tsx";
 import {useSettingsStore} from "../../shared/lib/settingsStore.ts";
 
 export function AppShell() {
-    const logout = useSessionStore((s) => s.logout)
     const settings = useSettingsStore((x) => x.settings)
     const f = settings?.features
 
@@ -18,8 +15,8 @@ export function AppShell() {
         {to: "/transactions", label: "Transactions", icon: CreditCard},
         ...(f?.aiJobs ? [{ to: "/ai-jobs", label: "AI Jobs", icon: Bot }] : []),
         {to: "/settings", label: "Settings", icon: Settings},
-        {to: "/team-roles/permissions", label: "Permissions", icon: Settings},
-        ...(f?.audit ? [{ to: "/audit", label: "Audit", icon: Settings }] : []),
+        {to: "/team-roles/permissions", label: "Permissions", icon: Shield},
+        ...(f?.audit ? [{ to: "/audit", label: "Audit", icon: ClipboardList }] : []),
     ]
 
     return (
@@ -80,53 +77,8 @@ export function AppShell() {
 
                 <div className="min-h-screen">
                     <MaintenanceBanner />
-                    <header
-                        className="sticky top-0 z-10 px-6 py-4"
-                        style={{
-                            background: "rgba(255,255,255,0.6)",
-                            backdropFilter: "blur(10px)",
-                            borderBottom: "1px solid rgb(var(--border))",
-                        }}
-                    >
-                        <div className="flex items-center justify-between">
-                            <div className="min-w-0">
-                                <div className="text-sm font-medium">Workspace</div>
-                                <div className="text-xs" style={{color: "rgb(var(--muted))"}}>
-                                    Internal Admin
-                                </div>
-                            </div>
 
-                            <div className="flex items-center gap-2">
-                                <RoleSwitcher/>
-
-                                <button
-                                    className="rounded-xl px-3 py-2 text-sm"
-                                    style={{
-                                        border: "1px solid rgb(var(--border))",
-                                        background: "rgb(var(--panel))",
-                                        boxShadow: "var(--sh-sm)",
-                                    }}
-                                >
-                                    Profile
-                                </button>
-
-                                <button
-                                    className="rounded-xl px-3 py-2 text-sm"
-                                    style={{
-                                        border: "1px solid rgb(var(--border))",
-                                        background: "rgb(var(--panel))",
-                                        boxShadow: "var(--sh-sm)",
-                                    }}
-                                    onClick={logout}
-                                >
-                                    Logout
-                                </button>
-
-                            </div>
-                        </div>
-                    </header>
-
-                    <main className="px-6 py-6">
+                    <main className="py-2 px-6">
                         <Outlet/>
                         <DevToolsPanel/>
 

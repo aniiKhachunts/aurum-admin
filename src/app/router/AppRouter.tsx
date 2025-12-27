@@ -15,7 +15,6 @@ import AiJobDetailPage from "../../pages/AiJobDetailPage.tsx";
 import AuditPage from "../../pages/AuditPage.tsx";
 import SettingsPage from "../../pages/SettingsPage.tsx";
 import {FeatureGuard} from "./FeatureGuard.tsx";
-import FeatureDisabledRoute from "../../pages/FeatureDisabledRoute.tsx";
 
 export function AppRouter() {
     return (
@@ -23,7 +22,6 @@ export function AppRouter() {
             <Route path="/login" element={<LoginPage/>}/>
             <Route path="/forgot-password" element={<ForgotPasswordPage/>}/>
             <Route path="/session-expired" element={<SessionExpiredPage/>}/>
-            <Route path="/feature-disabled" element={<FeatureDisabledRoute/>}/>
 
             <Route element={<RequireAuth/>}>
                 <Route element={<AppShell/>}>

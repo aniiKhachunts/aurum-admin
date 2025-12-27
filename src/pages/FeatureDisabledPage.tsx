@@ -1,12 +1,12 @@
 import { useNavigate } from "react-router-dom"
-import { PageHeader } from "../shared/ui/PageHeader"
 import { SectionCard } from "../shared/ui/SectionCard"
+import {Header} from "../shared/ui/Header.tsx";
 
-export default function FeatureDisabledPage({ title }: { title: string }) {
+export default function FeatureDisabledPage() {
     const navigate = useNavigate()
     return (
         <div className="space-y-4">
-            <PageHeader title={title} subtitle="This feature is currently disabled by configuration." />
+            <Header />
             <SectionCard>
                 <div className="flex items-center justify-between">
                     <div className="text-sm" style={{ color: "rgb(var(--muted))" }}>

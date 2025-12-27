@@ -1,33 +1,35 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import type { ColumnDef, OnChangeFn, SortingState } from "@tanstack/react-table"
-import { PageHeader } from "../shared/ui/PageHeader"
+import { Header } from "../shared/ui/Header"
 import { SectionCard } from "../shared/ui/SectionCard"
 import { DataTable } from "../shared/ui/DataTable/DataTable"
 import { DataTableToolbar } from "../shared/ui/DataTable/DataTableToolbar"
 import { DataTablePagination } from "../shared/ui/DataTable/DataTablePagination"
 import { DataTableState } from "../shared/ui/DataTable/DataTableStates"
-import { Can } from "../shared/ui/Can"
+import { StatusPill } from "../shared/ui/StatusPill"
 import { useSessionStore } from "../shared/lib/sessionStore"
-import { isSupportRefundAllowed } from "../shared/lib/permissions"
+import { useSettingsStore } from "../shared/lib/settingsStore"
+import { can } from "../shared/lib/permissions"
 import { getTransactions, refundTransaction, type Tx } from "../features/transactions/api/transactionsApi"
 import { WriteGuard } from "../shared/ui/WriteGuard"
-import { useSettingsStore } from "../shared/lib/settingsStore"
-import { toast } from "../shared/ui/Toast/toast"
 import { ConfirmDialog } from "../shared/ui/ConfirmDialog"
+import { toast } from "../shared/ui/Toast/toast"
 import { getErrorMessage } from "../shared/lib/getErrorMessage"
 import { formatApiError } from "../shared/lib/formatApiError"
 import { useTableQueryState } from "../shared/hooks/useTableQueryState"
 
-function TooltipWrap({ title, children }: { title: string; children: React.ReactNode }) {
-    return (
-        <span title={title} style={{ display: "inline-flex" }}>
-            {children}
-        </span>
-    )
+function statusTone(status: Tx["status"]) {
+    if (status === "paid") return "success"
+    if (status === "refunded") return "info"
+    if (status === "failed") return "danger"
+    return "neutral"
 }
 
 export default function TransactionsPage() {
     const role = useSessionStore((s) => s.role)
+    const userId = useSessionStore((s) => s.userId || undefined)
+    const orgId = useSessionStore((s) => s.orgId || undefined)
+
     const supportRefundLimit = useSettingsStore((s) => s.settings?.controls?.supportRefundLimit ?? 200)
     const refundsEnabled = Boolean(useSettingsStore((s) => s.settings?.features?.refunds))
 
@@ -48,6 +50,8 @@ export default function TransactionsPage() {
     const status = qs.search
     const sort = qs.sort as SortingState
 
+    const canRefund = can("transactions:refund", { role, userId, orgId })
+
     const load = useCallback(async () => {
         setLoading(true)
         setErr(null)
@@ -65,6 +69,11 @@ export default function TransactionsPage() {
     useEffect(() => {
         load()
     }, [load])
+
+    const onSortingChange: OnChangeFn<SortingState> = (updater) => {
+        const next = typeof updater === "function" ? updater(sort) : updater
+        write({ page: 1, sort: next })
+    }
 
     async function onRefund(tx: Tx) {
         setActingId(tx.id)
@@ -99,64 +108,70 @@ export default function TransactionsPage() {
                 enableSorting: true,
                 cell: (ctx) => `$${Number(ctx.getValue() ?? 0).toFixed(2)}`,
             },
-            { header: "Status", accessorKey: "status", enableSorting: true },
+            {
+                header: "Status",
+                accessorKey: "status",
+                enableSorting: true,
+                cell: (ctx) => {
+                    const v = String(ctx.getValue() ?? "") as Tx["status"]
+                    return <StatusPill label={v} tone={statusTone(v)} />
+                },
+            },
             {
                 header: "Actions",
+                id: "actions",
                 cell: (ctx) => {
                     const tx = ctx.row.original
                     const busy = actingId === tx.id
 
+                    const disabledByPermission = !canRefund
                     const disabledByFlag = !refundsEnabled
-                    const disabledByRule = role === "support" && !isSupportRefundAllowed(tx.amount, role)
-                    const isRefundable = tx.status === "paid"
+                    const disabledByRule = role === "support" && Number(tx.amount) > supportRefundLimit
+                    const disabledByState = tx.status !== "paid"
+                    const disabled = disabledByPermission || disabledByFlag || disabledByRule || disabledByState || busy
 
-                    const disabled = disabledByFlag || disabledByRule || !isRefundable || busy
+                    const reason = disabledByPermission
+                        ? "No permission to refund"
+                        : disabledByFlag
+                            ? "Refunds feature is disabled"
+                            : disabledByRule
+                                ? `Support can refund only amounts ≤ ${supportRefundLimit}`
+                                : disabledByState
+                                    ? "Only paid transactions can be refunded"
+                                    : busy
+                                        ? "Refund in progress"
+                                        : "Refund this transaction"
 
-                    const title = disabledByFlag
-                        ? "Refunds feature is disabled"
-                        : disabledByRule
-                            ? `Support can refund only amounts ≤ ${supportRefundLimit}`
-                            : !isRefundable
-                                ? "Only paid transactions can be refunded"
-                                : busy
-                                    ? "Refund in progress"
-                                    : "Refund this transaction"
+                    const style: React.CSSProperties = {
+                        border: "1px solid rgb(var(--border))",
+                        background: disabled ? "rgb(var(--panel-2))" : "rgb(var(--panel))",
+                        opacity: disabled ? 0.55 : 1,
+                        cursor: disabled ? "not-allowed" : "pointer",
+                    }
 
-                    const button = (
-                        <Can permission="transactions:refund" mode="disable" reason="No permission to refund">
-                            <WriteGuard reason={disabledByFlag ? "Refunds feature is disabled" : "Maintenance mode: refunds disabled"}>
-                                <button
-                                    className="rounded-xl px-3 py-2 text-xs font-medium"
-                                    style={{
-                                        border: "1px solid rgb(var(--border))",
-                                        background: "rgb(var(--panel))",
-                                        opacity: disabled ? 0.5 : 1,
-                                    }}
-                                    disabled={disabled}
-                                    onClick={() => setConfirmTx(tx)}
-                                    type="button"
-                                >
-                                    {busy ? "Refunding…" : "Refund"}
-                                </button>
-                            </WriteGuard>
-                        </Can>
+                    return (
+                        <WriteGuard reason={disabledByFlag ? "Refunds feature is disabled" : "Maintenance mode: refunds disabled"}>
+                            <button
+                                className="rounded-xl px-3 py-2 text-xs font-medium"
+                                style={style}
+                                disabled={disabled}
+                                title={reason}
+                                type="button"
+                                onClick={() => setConfirmTx(tx)}
+                            >
+                                {busy ? "Refunding…" : "Refund"}
+                            </button>
+                        </WriteGuard>
                     )
-
-                    return <TooltipWrap title={title}>{button}</TooltipWrap>
                 },
             },
         ],
-        [actingId, refundsEnabled, role, supportRefundLimit]
+        [actingId, canRefund, refundsEnabled, role, supportRefundLimit]
     )
-
-    const onSortingChange: OnChangeFn<SortingState> = (updater) => {
-        const next = typeof updater === "function" ? updater(sort) : updater
-        write({ page: 1, sort: next })
-    }
 
     return (
         <div className="space-y-4">
-            <PageHeader title="Transactions" subtitle="Pagination + refund action (permission-gated)." />
+            <Header />
 
             <SectionCard>
                 <DataTableToolbar
@@ -167,6 +182,7 @@ export default function TransactionsPage() {
                             value: status,
                             onChange: (v) => write({ page: 1, search: v }),
                             options: [
+                                { label: "Any", value: "" },
                                 { label: "Paid", value: "paid" },
                                 { label: "Refunded", value: "refunded" },
                                 { label: "Failed", value: "failed" },
@@ -198,7 +214,9 @@ export default function TransactionsPage() {
             <ConfirmDialog
                 open={Boolean(confirmTx)}
                 title="Issue refund?"
-                description={confirmTx ? `Refund transaction ${confirmTx.id} for $${Number(confirmTx.amount).toFixed(2)}.` : ""}
+                description={
+                    confirmTx ? `Refund transaction ${confirmTx.id} for $${Number(confirmTx.amount).toFixed(2)}.` : ""
+                }
                 confirmText="Refund"
                 cancelText="Cancel"
                 danger
@@ -207,6 +225,11 @@ export default function TransactionsPage() {
                 onClose={() => setConfirmTx(null)}
                 onConfirm={async () => {
                     if (!confirmTx) return
+                    if (!canRefund) {
+                        toast.error("Not allowed", "Your current role cannot refund transactions")
+                        setConfirmTx(null)
+                        return
+                    }
                     await onRefund(confirmTx)
                     setConfirmTx(null)
                 }}

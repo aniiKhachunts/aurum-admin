@@ -13,29 +13,81 @@ type SessionState = {
     setRole: (role: Role) => void
 }
 
-export const useSessionStore = create<SessionState>((set) => ({
-    isAuthed: false,
-    email: null,
-    userId: null,
-    orgId: null,
-    role: "admin",
+type Persisted = {
+    isAuthed: boolean
+    email: string | null
+    userId: string | null
+    orgId: string | null
+    role: Role
+}
 
-    login: (email) =>
-        set({
-            isAuthed: true,
-            email,
-            userId: "u_demo",
-            orgId: "org_demo",
-        }),
+const KEY = "aurum_session"
 
-    logout: () =>
-        set({
-            isAuthed: false,
-            email: null,
-            userId: null,
-            orgId: null,
-            role: "admin",
-        }),
+function readPersisted(): Persisted {
+    try {
+        const raw = localStorage.getItem(KEY)
+        if (!raw) {
+            return { isAuthed: false, email: null, userId: null, orgId: null, role: "admin" }
+        }
+        const v = JSON.parse(raw) as Partial<Persisted>
+        const role = v.role ?? "admin"
+        return {
+            isAuthed: Boolean(v.isAuthed),
+            email: v.email ?? null,
+            userId: v.userId ?? null,
+            orgId: v.orgId ?? null,
+            role,
+        }
+    } catch {
+        return { isAuthed: false, email: null, userId: null, orgId: null, role: "admin" }
+    }
+}
 
-    setRole: (role) => set({ role }),
-}))
+function writePersisted(p: Persisted) {
+    localStorage.setItem(KEY, JSON.stringify(p))
+}
+
+export const useSessionStore = create<SessionState>((set, get) => {
+    const initial = readPersisted()
+
+    return {
+        ...initial,
+
+        login: (email) => {
+            const next: Persisted = {
+                isAuthed: true,
+                email,
+                userId: "u_demo",
+                orgId: "org_demo",
+                role: get().role,
+            }
+            writePersisted(next)
+            set(next)
+        },
+
+        logout: () => {
+            const next: Persisted = {
+                isAuthed: false,
+                email: null,
+                userId: null,
+                orgId: null,
+                role: get().role,
+            }
+            writePersisted(next)
+            set(next)
+        },
+
+        setRole: (role) => {
+            const s = get()
+            const next: Persisted = {
+                isAuthed: s.isAuthed,
+                email: s.email,
+                userId: s.userId,
+                orgId: s.orgId,
+                role,
+            }
+            writePersisted(next)
+            set({ role })
+        },
+    }
+})

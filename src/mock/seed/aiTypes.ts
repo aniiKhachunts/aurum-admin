@@ -1,4 +1,4 @@
-export type AiJobStatus = "queued" | "running" | "paused" | "failed" | "completed" | "canceled"
+export type AiJobStatus = "Queued" | "Running" | "Paused" | "Failed" | "Completed" | "Canceled"
 
 export type AiJob = {
     id: string

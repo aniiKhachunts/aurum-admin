@@ -1,4 +1,4 @@
-export type SeedUserStatus = "active" | "invited" | "suspended" | "deactivated"
+export type SeedUserStatus = "Active" | "Invited" | "Suspended" | "Deactivated"
 export type SeedRole = "owner" | "admin" | "analyst" | "support" | "viewer"
 
 export type SeedUser = {

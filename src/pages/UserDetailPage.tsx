@@ -1,34 +1,34 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { PageHeader } from "../shared/ui/PageHeader"
+import { Header } from "../shared/ui/Header"
 import { SectionCard } from "../shared/ui/SectionCard"
-import {StatusPill, type StatusTone} from "../shared/ui/StatusPill"
+import { StatusPill, type StatusTone } from "../shared/ui/StatusPill"
 import { DataTableState } from "../shared/ui/DataTable/DataTableStates"
 import { FormField } from "../shared/ui/FormField"
 import { Can } from "../shared/ui/Can"
 import { useSessionStore } from "../shared/lib/sessionStore"
-import { deactivateUser, getUser, suspendUser, updateUser, type UserDetail } from "../features/users/api/userDetailApi"
 import { WriteGuard } from "../shared/ui/WriteGuard"
+import { ConfirmDialog } from "../shared/ui/ConfirmDialog"
 import { toast } from "../shared/ui/Toast/toast"
 import { formatApiError } from "../shared/lib/formatApiError"
-import { ConfirmDialog } from "../shared/ui/ConfirmDialog"
-import {getErrorMessage} from "../shared/lib/getErrorMessage.ts";
+import { getErrorMessage } from "../shared/lib/getErrorMessage"
+import { deactivateUser, getUser, suspendUser, updateUser, type UserDetail } from "../features/users/api/userDetailApi"
 
 function statusTone(status: string): StatusTone {
-    if (status === "active") return "success"
-    if (status === "invited") return "info"
-    if (status === "suspended") return "warn"
-    if (status === "deactivated") return "danger"
+    if (status === "Active") return "success"
+    if (status === "Invited") return "info"
+    if (status === "Suspended") return "warn"
+    if (status === "Deactivated") return "danger"
     return "neutral"
 }
 
-function inputStyle() {
+function inputStyle(): React.CSSProperties {
     return {
         background: "rgb(var(--panel))",
         border: "1px solid rgb(var(--border))",
         borderRadius: "12px",
         outline: "none",
-    } as React.CSSProperties
+    }
 }
 
 export default function UserDetailPage() {
@@ -39,16 +39,16 @@ export default function UserDetailPage() {
     const [item, setItem] = useState<UserDetail | null>(null)
     const [draft, setDraft] = useState<UserDetail | null>(null)
     const [loading, setLoading] = useState(true)
+    const [err, setErr] = useState<string | null>(null)
+
+    const [editMode, setEditMode] = useState(false)
     const [saving, setSaving] = useState(false)
     const [acting, setActing] = useState(false)
-    const [err, setErr] = useState<string | null>(null)
-    const [editMode, setEditMode] = useState(false)
-
     const [confirmDeactivate, setConfirmDeactivate] = useState(false)
 
     const dirty = useMemo(() => {
         if (!item || !draft) return false
-        return item.name !== draft.name || item.role !== draft.role || JSON.stringify(item.tags) !== JSON.stringify(draft.tags)
+        return item.name !== draft.name || item.role !== draft.role
     }, [item, draft])
 
     const load = useCallback(async () => {
@@ -73,14 +73,19 @@ export default function UserDetailPage() {
 
     useEffect(() => {
         load()
-    }, [load])
+    }, [load, role])
 
-    async function onSave() {
+    const onCancel = useCallback(() => {
+        setDraft(item)
+        setEditMode(false)
+    }, [item])
+
+    const onSave = useCallback(async () => {
         if (!id || !draft) return
         setSaving(true)
         setErr(null)
         try {
-            const res = await updateUser(id, { name: draft.name, role: draft.role, tags: draft.tags })
+            const res = await updateUser(id, { name: draft.name, role: draft.role })
             setItem(res.item)
             setDraft(res.item)
             setEditMode(false)
@@ -92,14 +97,9 @@ export default function UserDetailPage() {
         } finally {
             setSaving(false)
         }
-    }
+    }, [id, draft])
 
-    function onCancel() {
-        setDraft(item)
-        setEditMode(false)
-    }
-
-    async function onSuspend() {
+    const onSuspend = useCallback(async () => {
         if (!id) return
         setActing(true)
         setErr(null)
@@ -116,9 +116,9 @@ export default function UserDetailPage() {
         } finally {
             setActing(false)
         }
-    }
+    }, [id])
 
-    async function onDeactivate() {
+    const onDeactivate = useCallback(async () => {
         if (!id) return
         setActing(true)
         setErr(null)
@@ -135,15 +135,38 @@ export default function UserDetailPage() {
         } finally {
             setActing(false)
         }
+    }, [id])
+
+    if (loading) {
+        return (
+            <div className="space-y-4">
+                <Header title="User" subtitle="Loading…" />
+                <DataTableState kind="loading" label="Loading user…" />
+            </div>
+        )
     }
 
-    if (loading) return <DataTableState kind="loading" label="Loading user…" />
-    if (err) return <DataTableState kind="error" message={err} onRetry={load} />
-    if (!item || !draft) return <DataTableState kind="empty" title="User not found" />
+    if (err) {
+        return (
+            <div className="space-y-4">
+                <Header title="User" subtitle="Error" />
+                <DataTableState kind="error" message={err} onRetry={load} />
+            </div>
+        )
+    }
+
+    if (!item || !draft) {
+        return (
+            <div className="space-y-4">
+                <Header title="User" subtitle="Not found" />
+                <DataTableState kind="empty" title="User not found" />
+            </div>
+        )
+    }
 
     return (
         <div className="space-y-4">
-            <PageHeader
+            <Header
                 title={item.name}
                 subtitle={item.email}
                 actions={

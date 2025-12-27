@@ -24,3 +24,7 @@ body {
 .u-muted {
     color: rgb(var(--muted));
 }
+
+::selection {
+    background: rgba(var(--brand), 0.25);
+}
