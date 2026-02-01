@@ -133,7 +133,7 @@ export function Header({ title, subtitle, actions }: Props) {
                                 }}
                                 role="menu"
                             >
-                                {(["owner", "admin", "analyst", "support", "viewer"] as Role[]).map((r) => (
+                                {(["Owner", "Admin", "Analyst", "Support", "Viewer"] as Role[]).map((r) => (
                                     <button
                                         key={r}
                                         className="flex w-full items-center justify-between px-3 py-2 text-sm hover:bg-black/5"

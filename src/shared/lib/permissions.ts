@@ -1,6 +1,6 @@
 import {useSettingsStore} from "./settingsStore.ts";
 
-export type Role = "owner" | "admin" | "analyst" | "support" | "viewer"
+export type Role = "Owner" | "Admin" | "Analyst" | "Support" | "Viewer"
 
 export type Permission =
     | "users:read"
@@ -26,7 +26,7 @@ export type PermissionContext = {
 }
 
 const matrix: Record<Role, Set<Permission>> = {
-    owner: new Set([
+    Owner: new Set([
         "users:read",
         "users:write",
         "users:deactivate",
@@ -43,7 +43,7 @@ const matrix: Record<Role, Set<Permission>> = {
         "settings:read",
         "settings:write",
     ]),
-    admin: new Set([
+    Admin: new Set([
         "users:read",
         "users:write",
         "users:deactivate",
@@ -59,7 +59,7 @@ const matrix: Record<Role, Set<Permission>> = {
         "settings:read",
         "settings:write",
     ]),
-    analyst: new Set([
+    Analyst: new Set([
         "users:read",
         "orgs:read",
         "projects:read",
@@ -68,7 +68,7 @@ const matrix: Record<Role, Set<Permission>> = {
         "audit:read",
         "settings:read",
     ]),
-    support: new Set([
+    Support: new Set([
         "users:read",
         "users:write",
         "orgs:read",
@@ -80,7 +80,7 @@ const matrix: Record<Role, Set<Permission>> = {
         "audit:read",
         "settings:read",
     ]),
-    viewer: new Set([
+    Viewer: new Set([
         "users:read",
         "orgs:read",
         "projects:read",
@@ -96,15 +96,15 @@ export function can(permission: Permission, ctx: PermissionContext) {
 }
 
 export function roleLabel(role: Role) {
-    if (role === "owner") return "Owner"
-    if (role === "admin") return "Admin"
-    if (role === "analyst") return "Analyst"
-    if (role === "support") return "Support"
+    if (role === "Owner") return "Owner"
+    if (role === "Admin") return "Admin"
+    if (role === "Analyst") return "Analyst"
+    if (role === "Support") return "Support"
     return "Viewer"
 }
 
 export function isSupportRefundAllowed(amount: number, role: string) {
-    if (role !== "support") return true
+    if (role !== "Support") return true
     const limit = useSettingsStore.getState().settings?.controls.supportRefundLimit ?? 200
     return amount <= limit
 }

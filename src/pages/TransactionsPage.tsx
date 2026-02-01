@@ -19,9 +19,9 @@ import { formatApiError } from "../shared/lib/formatApiError"
 import { useTableQueryState } from "../shared/hooks/useTableQueryState"
 
 function statusTone(status: Tx["status"]) {
-    if (status === "paid") return "success"
-    if (status === "refunded") return "info"
-    if (status === "failed") return "danger"
+    if (status === "Paid") return "success"
+    if (status === "Refunded") return "info"
+    if (status === "Failed") return "danger"
     return "neutral"
 }
 
@@ -126,8 +126,8 @@ export default function TransactionsPage() {
 
                     const disabledByPermission = !canRefund
                     const disabledByFlag = !refundsEnabled
-                    const disabledByRule = role === "support" && Number(tx.amount) > supportRefundLimit
-                    const disabledByState = tx.status !== "paid"
+                    const disabledByRule = role === "Support" && Number(tx.amount) > supportRefundLimit
+                    const disabledByState = tx.status !== "Paid"
                     const disabled = disabledByPermission || disabledByFlag || disabledByRule || disabledByState || busy
 
                     const reason = disabledByPermission
@@ -183,9 +183,9 @@ export default function TransactionsPage() {
                             onChange: (v) => write({ page: 1, search: v }),
                             options: [
                                 { label: "Any", value: "" },
-                                { label: "Paid", value: "paid" },
-                                { label: "Refunded", value: "refunded" },
-                                { label: "Failed", value: "failed" },
+                                { label: "Paid", value: "Paid" },
+                                { label: "Refunded", value: "Refunded" },
+                                { label: "Failed", value: "Failed" },
                             ],
                         },
                     ]}

@@ -34,12 +34,12 @@ type RevenueRow = {
 
 type JobsRow = {
     date: string
-    queued: number
-    running: number
-    paused: number
-    failed: number
-    completed: number
-    canceled: number
+    Queued: number
+    Running: number
+    Paused: number
+    Failed: number
+    Completed: number
+    Canceled: number
 }
 
 export const analyticsHandlers = [
@@ -49,8 +49,8 @@ export const analyticsHandlers = [
         const totalUsers = db.users.length
         const totalJobs = db.aiJobs.length
         const totalTx = db.transactions.length
-        const refunded = db.transactions.filter((t: Tx) => t.status === "refunded").length
-        const failedJobs = db.aiJobs.filter((j: AiJob) => j.status === "failed").length
+        const refunded = db.transactions.filter((t: Tx) => t.status === "Refunded").length
+        const failedJobs = db.aiJobs.filter((j: AiJob) => j.status === "Failed").length
 
         return HttpResponse.json({
             users: { total: totalUsers },
@@ -71,8 +71,8 @@ export const analyticsHandlers = [
             const row = map.get(k)
             if (!row) return
             row.txCount += 1
-            if (t.status === "paid") row.revenueUsd += Number(t.amount) || 0
-            if (t.status === "refunded") row.refundsUsd += Number(t.amount) || 0
+            if (t.status === "Paid") row.revenueUsd += Number(t.amount) || 0
+            if (t.status === "Refunded") row.refundsUsd += Number(t.amount) || 0
         })
 
         const series = days.map((k) => map.get(k)!)
@@ -87,12 +87,12 @@ export const analyticsHandlers = [
         days.forEach((k) =>
             map.set(k, {
                 date: k,
-                queued: 0,
-                running: 0,
-                paused: 0,
-                failed: 0,
-                completed: 0,
-                canceled: 0,
+                Queued: 0,
+                Running: 0,
+                Paused: 0,
+                Failed: 0,
+                Completed: 0,
+                Canceled: 0,
             })
         )
 

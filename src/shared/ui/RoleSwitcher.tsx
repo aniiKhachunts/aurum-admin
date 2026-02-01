@@ -3,7 +3,7 @@ import type { Role } from "../lib/permissions"
 import { roleLabel } from "../lib/permissions"
 import { useSessionStore } from "../lib/sessionStore"
 
-const roles: Role[] = ["owner", "admin", "analyst", "support", "viewer"]
+const roles: Role[] = ["Owner", "Admin", "Analyst", "Support", "Viewer"]
 
 export function RoleSwitcher() {
     const role = useSessionStore((s) => s.role)

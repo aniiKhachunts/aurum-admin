@@ -8,8 +8,8 @@ export type Tx = {
     userId: string
     amount: number
     currency: "USD"
-    status: "paid" | "refunded" | "failed"
-    provider: "stripe" | "paypal"
+    status: "Paid" | "Refunded" | "Failed"
+    provider: "Stripe" | "Paypal"
     createdAt: string
 }
 

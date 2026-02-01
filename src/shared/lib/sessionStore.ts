@@ -27,10 +27,10 @@ function readPersisted(): Persisted {
     try {
         const raw = localStorage.getItem(KEY)
         if (!raw) {
-            return { isAuthed: false, email: null, userId: null, orgId: null, role: "admin" }
+            return { isAuthed: false, email: null, userId: null, orgId: null, role: "Admin" }
         }
         const v = JSON.parse(raw) as Partial<Persisted>
-        const role = v.role ?? "admin"
+        const role = v.role ?? "Admin"
         return {
             isAuthed: Boolean(v.isAuthed),
             email: v.email ?? null,
@@ -39,7 +39,7 @@ function readPersisted(): Persisted {
             role,
         }
     } catch {
-        return { isAuthed: false, email: null, userId: null, orgId: null, role: "admin" }
+        return { isAuthed: false, email: null, userId: null, orgId: null, role: "Admin" }
     }
 }
 

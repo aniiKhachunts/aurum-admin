@@ -92,8 +92,8 @@ export function generateSeed(): SeedDb {
     const transactions: SeedTransaction[] = Array.from({length: 120}).map((_, i) => {
         const org = pick(orgs)
         const u = pick(users.filter((x) => x.orgId === org.id))
-        const status = pick(["paid", "paid", "paid", "failed", "refunded"] as const)
-        const provider = pick(["stripe", "paypal"] as const)
+        const status = pick(["Paid", "Paid", "Paid", "Failed", "Refunded"] as const)
+        const provider = pick(["Stripe", "Paypal"] as const)
         const createdAgo = Math.floor(Math.random() * 120)
         const base = 20 + Math.floor(Math.random() * 480)
         const amount = Math.round(base * 100) / 100

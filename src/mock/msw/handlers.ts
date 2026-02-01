@@ -229,11 +229,11 @@ export const handlers = [
         const t = db.transactions.find((x) => x.id === params.id)
         if (!t) return HttpResponse.json({message: "Transaction not found", code: "NOT_FOUND"}, {status: 404})
 
-        if (t.status === "refunded") {
+        if (t.status === "Refunded") {
             return HttpResponse.json({message: "Already refunded", code: "ALREADY_REFUNDED"}, {status: 409})
         }
 
-        if (t.status !== "paid") {
+        if (t.status !== "Paid") {
             return HttpResponse.json({
                 message: "Only paid transactions can be refunded",
                 code: "INVALID_STATE"
@@ -241,7 +241,7 @@ export const handlers = [
         }
 
         const prev = {...t}
-        t.status = "refunded"
+        t.status = "Refunded"
 
         addAudit({
             actorRole: actorRole(request),
@@ -309,12 +309,12 @@ export const handlers = [
         const job = db.aiJobs.find((j) => j.id === params.id)
         if (!job) return HttpResponse.json({message: "Job not found", code: "NOT_FOUND"}, {status: 404})
 
-        if (job.status === "completed" || job.status === "canceled") {
+        if (job.status === "Completed" || job.status === "Canceled") {
             return HttpResponse.json({message: "Job cannot be started", code: "INVALID_STATE"}, {status: 400})
         }
 
         const prevStatus = job.status
-        job.status = "running"
+        job.status = "Running"
         job.updatedAt = new Date().toISOString()
         job.runs.unshift({id: `run_${Date.now()}`, startedAt: new Date().toISOString()})
 
@@ -323,7 +323,7 @@ export const handlers = [
             action: "ai_jobs.start",
             entityType: "ai_job",
             entityId: job.id,
-            meta: {prevStatus, nextStatus: "running"},
+            meta: {prevStatus, nextStatus: "Running"},
         })
 
         return HttpResponse.json({item: job})
@@ -334,12 +334,12 @@ export const handlers = [
         const job = db.aiJobs.find((j) => j.id === params.id)
         if (!job) return HttpResponse.json({message: "Job not found", code: "NOT_FOUND"}, {status: 404})
 
-        if (job.status !== "running") {
+        if (job.status !== "Running") {
             return HttpResponse.json({message: "Only running jobs can be paused", code: "INVALID_STATE"}, {status: 400})
         }
 
         const prevStatus = job.status
-        job.status = "paused"
+        job.status = "Paused"
         job.updatedAt = new Date().toISOString()
 
         addAudit({
@@ -358,12 +358,12 @@ export const handlers = [
         const job = db.aiJobs.find((j) => j.id === params.id)
         if (!job) return HttpResponse.json({message: "Job not found", code: "NOT_FOUND"}, {status: 404})
 
-        if (job.status === "completed" || job.status === "canceled") {
+        if (job.status === "Completed" || job.status === "Canceled") {
             return HttpResponse.json({message: "Job cannot be canceled", code: "INVALID_STATE"}, {status: 400})
         }
 
         const prevStatus = job.status
-        job.status = "canceled"
+        job.status = "Canceled"
         job.progress = 100
         job.updatedAt = new Date().toISOString()
 
