@@ -224,12 +224,12 @@ export default function DashboardPage() {
                                 <YAxis/>
                                 <Tooltip labelFormatter={(l) => `Date: ${l}`}/>
                                 <Legend/>
-                                <Bar dataKey="queued" stackId="a" name="Queued" fill="rgb(var(--info))"/>
-                                <Bar dataKey="running" stackId="a" name="Running" fill="rgb(var(--brand))"/>
-                                <Bar dataKey="paused" stackId="a" name="Paused" fill="rgb(var(--warn))"/>
-                                <Bar dataKey="completed" stackId="a" name="Completed" fill="rgb(var(--success))"/>
-                                <Bar dataKey="failed" stackId="a" name="Failed" fill="rgb(var(--danger))"/>
-                                <Bar dataKey="canceled" stackId="a" name="Canceled" fill="rgb(var(--border-strong))"/>
+                                <Bar dataKey="Queued" stackId="a" name="Queued" fill="rgb(var(--info))"/>
+                                <Bar dataKey="Running" stackId="a" name="Running" fill="rgb(var(--brand))"/>
+                                <Bar dataKey="Paused" stackId="a" name="Paused" fill="rgb(var(--warn))"/>
+                                <Bar dataKey="Completed" stackId="a" name="Completed" fill="rgb(var(--success))"/>
+                                <Bar dataKey="Failed" stackId="a" name="Failed" fill="rgb(var(--danger))"/>
+                                <Bar dataKey="Canceled" stackId="a" name="Canceled" fill="rgb(var(--border-strong))"/>
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
