@@ -10,13 +10,24 @@ async function bootstrap() {
     await startMsw()
     applyTheme(getInitialTheme())
 
-    createRoot(document.getElementById("root")!).render(
-        <StrictMode>
-            <AppProviders>
-                <App />
-            </AppProviders>
-        </StrictMode>
-    )
+    async function enableMocks() {
+        if (typeof window === "undefined") return
+
+        const { worker } = await import("./mock/msw/browser")
+        return worker.start({
+            onUnhandledRequest: "bypass",
+        })
+    }
+
+    enableMocks().then(() => {
+        createRoot(document.getElementById("root")!).render(
+            <StrictMode>
+                <AppProviders>
+                    <App/>
+                </AppProviders>
+            </StrictMode>
+        )
+    })
 }
 
 bootstrap()
