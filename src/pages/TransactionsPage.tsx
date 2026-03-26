@@ -160,21 +160,18 @@ export default function TransactionsPage() {
                         <WriteGuard
                             reason={disabledByFlag ? "Refunds feature is disabled" : "Maintenance mode: refunds disabled"}>
                             <button
-                                className="relative rounded-xl px-3 py-2 text-xs font-medium w-[110px] flex items-center justify-center"
+                                className="rounded-xl px-3 py-2 text-xs font-medium w-[110px] flex items-center justify-center"
                                 style={style}
                                 disabled={disabled}
                                 title={reason}
                                 type="button"
                                 onClick={() => setConfirmTx(tx)}
                             >
-                                <span className="relative">
-                                  <span className={busy ? "opacity-0" : "opacity-100"}>
-                                    Refund
-                                  </span>
-                                  <span className={`absolute inset-0 flex items-center justify-center ${busy ? "opacity-100" : "opacity-0"}`}>
-                                    Refunding…
-                                  </span>
-                                </span>
+                                {busy ? (
+                                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                ) : (
+                                    "Refund"
+                                )}
                             </button>
                         </WriteGuard>
                     )

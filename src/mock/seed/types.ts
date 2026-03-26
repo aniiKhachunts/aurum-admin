@@ -32,3 +32,12 @@ export type SeedTransaction = {
     provider: "Stripe" | "Paypal"
     createdAt: string
 }
+
+export type AuditEventDto = {
+    id: string
+    action: string
+    entityType: string
+    entityId?: string
+    actorRole?: string
+    createdAt: string
+}

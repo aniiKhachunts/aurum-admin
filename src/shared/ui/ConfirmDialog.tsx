@@ -31,6 +31,23 @@ export function ConfirmDialog({
         if (!open) setTyped("")
     }, [open])
 
+    useEffect(() => {
+        if (!open) return
+
+        const handleKey = (e: KeyboardEvent) => {
+            if (e.key === "Enter") {
+                e.preventDefault()
+                if (!busy) onConfirm()
+            }
+        }
+
+        window.addEventListener("keydown", handleKey)
+
+        return () => {
+            window.removeEventListener("keydown", handleKey)
+        }
+    }, [open, busy, onConfirm])
+
     const canConfirm = useMemo(() => {
         if (busy) return false
         if (!requireText) return true

@@ -171,12 +171,16 @@ export default function AiJobsPage() {
                                     <span title={startTitle} style={{ display: "inline-flex" }}>
                                         <button
                                             type="button"
-                                            className="rounded-xl px-3 py-2 text-xs font-medium"
+                                            className="rounded-xl px-3 py-2 text-xs font-medium w-[72px] flex items-center justify-center"
                                             style={{ ...baseBtnStyle, ...(startDisabled ? disabledVisual : {}) }}
                                             disabled={startDisabled}
                                             onClick={() => act("start", j.id)}
                                         >
-                                            {busy ? "…" : "Start"}
+                                            {busy ? (
+                                                <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                            ) : (
+                                                "Start"
+                                            )}
                                         </button>
                                     </span>
                                 </Can>
@@ -268,7 +272,7 @@ export default function AiJobsPage() {
                     <DataTableState kind="loading" />
                 ) : err ? (
                     <DataTableState kind="error" message={err} onRetry={load} />
-                ) : items.length === 0 ? (
+                ) : items?.length === 0 ? (
                     <DataTableState kind="empty" title="No jobs" subtitle="Try clearing filters." />
                 ) : (
                     <>

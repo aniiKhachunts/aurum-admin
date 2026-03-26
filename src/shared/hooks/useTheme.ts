@@ -1,20 +1,26 @@
-import { useEffect, useMemo, useState } from "react"
-import { applyTheme, getInitialTheme, type ThemeMode } from "../lib/theme"
+import { useCallback, useSyncExternalStore } from "react"
+import {
+    applyTheme,
+    getInitialTheme,
+    getTheme,
+    subscribeTheme,
+    type ThemeMode,
+} from "../lib/theme"
 
 export function useTheme() {
-    const [theme, setTheme] = useState<ThemeMode>(() => getInitialTheme())
+    const theme = useSyncExternalStore(subscribeTheme, getTheme, getInitialTheme)
 
-    useEffect(() => {
-        applyTheme(theme)
+    const setTheme = useCallback((next: ThemeMode) => {
+        applyTheme(next)
+    }, [])
+
+    const toggle = useCallback(() => {
+        applyTheme(theme === "dark" ? "light" : "dark")
     }, [theme])
 
-    const api = useMemo(() => {
-        return {
-            theme,
-            setTheme,
-            toggle: () => setTheme((t) => (t === "dark" ? "light" : "dark")),
-        }
-    }, [theme])
-
-    return api
+    return {
+        theme,
+        setTheme,
+        toggle,
+    }
 }

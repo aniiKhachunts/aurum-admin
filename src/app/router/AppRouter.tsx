@@ -5,7 +5,7 @@ import LoginPage from "../../features/auth/pages/LoginPage"
 import ForgotPasswordPage from "../../features/auth/pages/ForgotPasswordPage"
 import SessionExpiredPage from "../../features/auth/pages/SessionExpiredPage"
 import PermissionsPlaygroundPage from "../../features/team-roles/pages/PermissionsPlaygroundPage.tsx";
-import DashboardPage from "../../pages/DashboardPage.tsx";
+import DashboardPage from "../../pages/dashboard/DashboardPage.tsx";
 import UsersPage from "../../pages/UsersPage.tsx";
 import UserDetailPage from "../../pages/UserDetailPage.tsx";
 import OrganizationsPage from "../../pages/OrganizationsPage.tsx";
