@@ -20,27 +20,27 @@ export default function DashboardPage() {
     const kpi = [
         {
             label: "Total users",
-            value: overview?.users.total ?? null,
-            display: overview ? fmtCompact(overview.users.total) : "—",
+            value: overview?.users?.total ?? null,
+            display: overview ? fmtCompact(overview?.users?.total) : "—",
             hint: "Accounts in system",
         },
         {
             label: "AI jobs",
-            value: overview?.aiJobs.total ?? null,
-            display: overview ? fmtCompact(overview.aiJobs.total) : "—",
-            hint: overview ? `${overview.aiJobs.failed} failed` : "—",
+            value: overview?.aiJobs?.total ?? null,
+            display: overview ? fmtCompact(overview?.aiJobs?.total) : "—",
+            hint: overview ? `${overview?.aiJobs?.failed} failed` : "—",
         },
         {
             label: "Transactions",
-            value: overview?.billing.totalTransactions ?? null,
-            display: overview ? fmtCompact(overview.billing.totalTransactions) : "—",
-            hint: overview ? `${overview.billing.refunded} refunded` : "—",
+            value: overview?.billing?.totalTransactions ?? null,
+            display: overview ? fmtCompact(overview?.billing?.totalTransactions) : "—",
+            hint: overview ? `${overview?.billing?.refunded} refunded` : "—",
         },
         {
             label: "Revenue (30d)",
-            value: revenue.length ? totals.revenue30 : null,
-            display: revenue.length ? fmtUsd(totals.revenue30) : "—",
-            hint: revenue.length ? `Refunds: ${fmtUsd(totals.refunds30)}` : "—",
+            value: revenue?.length ? totals?.revenue30 : null,
+            display: revenue?.length ? fmtUsd(totals?.revenue30) : "—",
+            hint: revenue?.length ? `Refunds: ${fmtUsd(totals?.refunds30)}` : "—",
         },
     ]
 
