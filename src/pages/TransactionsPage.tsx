@@ -1,22 +1,22 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
-import type { ColumnDef, OnChangeFn, SortingState } from "@tanstack/react-table"
-import { Header } from "../shared/ui/Header"
-import { SectionCard } from "../shared/ui/SectionCard"
-import { DataTable } from "../shared/ui/DataTable/DataTable"
-import { DataTableToolbar } from "../shared/ui/DataTable/DataTableToolbar"
-import { DataTablePagination } from "../shared/ui/DataTable/DataTablePagination"
-import { DataTableState } from "../shared/ui/DataTable/DataTableStates"
-import { StatusPill } from "../shared/ui/StatusPill"
-import { useSessionStore } from "../shared/lib/sessionStore"
-import { useSettingsStore } from "../shared/lib/settingsStore"
-import { can } from "../shared/lib/permissions"
-import { getTransactions, refundTransaction, type Tx } from "../features/transactions/api/transactionsApi"
-import { WriteGuard } from "../shared/ui/WriteGuard"
-import { ConfirmDialog } from "../shared/ui/ConfirmDialog"
-import { toast } from "../shared/ui/Toast/toast"
-import { getErrorMessage } from "../shared/lib/getErrorMessage"
-import { formatApiError } from "../shared/lib/formatApiError"
-import { useTableQueryState } from "../shared/hooks/useTableQueryState"
+import {useCallback, useEffect, useMemo, useState} from "react"
+import type {ColumnDef, OnChangeFn, SortingState} from "@tanstack/react-table"
+import {Header} from "../shared/ui/Header"
+import {SectionCard} from "../shared/ui/SectionCard"
+import {DataTable} from "../shared/ui/DataTable/DataTable"
+import {DataTableToolbar} from "../shared/ui/DataTable/DataTableToolbar"
+import {DataTablePagination} from "../shared/ui/DataTable/DataTablePagination"
+import {DataTableState} from "../shared/ui/DataTable/DataTableStates"
+import {StatusPill} from "../shared/ui/StatusPill"
+import {useSessionStore} from "../shared/lib/sessionStore"
+import {useSettingsStore} from "../shared/lib/settingsStore"
+import {can} from "../shared/lib/permissions"
+import {getTransactions, refundTransaction, type Tx} from "../features/transactions/api/transactionsApi"
+import {WriteGuard} from "../shared/ui/WriteGuard"
+import {ConfirmDialog} from "../shared/ui/ConfirmDialog"
+import {toast} from "../shared/ui/Toast/toast"
+import {getErrorMessage} from "../shared/lib/getErrorMessage"
+import {formatApiError} from "../shared/lib/formatApiError"
+import {useTableQueryState} from "../shared/hooks/useTableQueryState"
 
 function statusTone(status: Tx["status"]) {
     if (status === "Paid") return "success"
@@ -40,9 +40,9 @@ export default function TransactionsPage() {
     const [actingId, setActingId] = useState<string | null>(null)
     const [confirmTx, setConfirmTx] = useState<Tx | null>(null)
 
-    const { state: qs, write } = useTableQueryState({
+    const {state: qs, write} = useTableQueryState({
         searchKey: "status",
-        defaults: { page: 1, pageSize: 20, search: "", sort: [] },
+        defaults: {page: 1, pageSize: 20, search: "", sort: []},
     })
 
     const page = qs.page
@@ -50,13 +50,13 @@ export default function TransactionsPage() {
     const status = qs.search
     const sort = qs.sort as SortingState
 
-    const canRefund = can("transactions:refund", { role, userId, orgId })
+    const canRefund = can("transactions:refund", {role, userId, orgId})
 
     const load = useCallback(async () => {
         setLoading(true)
         setErr(null)
         try {
-            const res = await getTransactions({ page, pageSize, status, sort })
+            const res = await getTransactions({page, pageSize, status, sort})
             setItems(res.items)
             setTotal(res.total)
         } catch (e: unknown) {
@@ -72,7 +72,7 @@ export default function TransactionsPage() {
 
     const onSortingChange: OnChangeFn<SortingState> = (updater) => {
         const next = typeof updater === "function" ? updater(sort) : updater
-        write({ page: 1, sort: next })
+        write({page: 1, sort: next})
     }
 
     async function onRefund(tx: Tx) {
@@ -92,16 +92,16 @@ export default function TransactionsPage() {
 
     const columns = useMemo<ColumnDef<Tx, unknown>[]>(
         () => [
-            { header: "ID", accessorKey: "id", enableSorting: true },
+            {header: "ID", accessorKey: "id", enableSorting: true},
             {
                 header: "Created",
                 accessorKey: "createdAt",
                 enableSorting: true,
                 cell: (ctx) => new Date(String(ctx.getValue() ?? "")).toLocaleDateString(),
             },
-            { header: "Provider", accessorKey: "provider", enableSorting: true },
-            { header: "Org", accessorKey: "orgId", enableSorting: true },
-            { header: "User", accessorKey: "userId", enableSorting: true },
+            {header: "Provider", accessorKey: "provider", enableSorting: true},
+            {header: "Org", accessorKey: "orgId", enableSorting: true},
+            {header: "User", accessorKey: "userId", enableSorting: true},
             {
                 header: "Amount",
                 accessorKey: "amount",
@@ -114,7 +114,7 @@ export default function TransactionsPage() {
                 enableSorting: true,
                 cell: (ctx) => {
                     const v = String(ctx.getValue() ?? "") as Tx["status"]
-                    return <StatusPill label={v} tone={statusTone(v)} />
+                    return <StatusPill label={v} tone={statusTone(v)}/>
                 },
             },
             {
@@ -129,7 +129,14 @@ export default function TransactionsPage() {
                     const disabledByRule = role === "Support" && Number(tx.amount) > supportRefundLimit
                     const disabledByState = tx.status !== "Paid"
                     const disabled = disabledByPermission || disabledByFlag || disabledByRule || disabledByState || busy
-
+                    console.log({
+                        canRefund,
+                        refundsEnabled,
+                        role,
+                        amount: tx.amount,
+                        supportRefundLimit,
+                        status: tx.status,
+                    })
                     const reason = disabledByPermission
                         ? "No permission to refund"
                         : disabledByFlag
@@ -150,16 +157,24 @@ export default function TransactionsPage() {
                     }
 
                     return (
-                        <WriteGuard reason={disabledByFlag ? "Refunds feature is disabled" : "Maintenance mode: refunds disabled"}>
+                        <WriteGuard
+                            reason={disabledByFlag ? "Refunds feature is disabled" : "Maintenance mode: refunds disabled"}>
                             <button
-                                className="rounded-xl px-3 py-2 text-xs font-medium"
+                                className="relative rounded-xl px-3 py-2 text-xs font-medium w-[110px] flex items-center justify-center"
                                 style={style}
                                 disabled={disabled}
                                 title={reason}
                                 type="button"
                                 onClick={() => setConfirmTx(tx)}
                             >
-                                {busy ? "Refunding…" : "Refund"}
+                                <span className="relative">
+                                  <span className={busy ? "opacity-0" : "opacity-100"}>
+                                    Refund
+                                  </span>
+                                  <span className={`absolute inset-0 flex items-center justify-center ${busy ? "opacity-100" : "opacity-0"}`}>
+                                    Refunding…
+                                  </span>
+                                </span>
                             </button>
                         </WriteGuard>
                     )
@@ -171,7 +186,7 @@ export default function TransactionsPage() {
 
     return (
         <div className="space-y-4">
-            <Header />
+            <Header/>
 
             <SectionCard>
                 <DataTableToolbar
@@ -180,32 +195,32 @@ export default function TransactionsPage() {
                             key: "status",
                             label: "Status",
                             value: status,
-                            onChange: (v) => write({ page: 1, search: v }),
+                            onChange: (v) => write({page: 1, search: v}),
                             options: [
-                                { label: "Any", value: "" },
-                                { label: "Paid", value: "Paid" },
-                                { label: "Refunded", value: "Refunded" },
-                                { label: "Failed", value: "Failed" },
+                                {label: "Any", value: ""},
+                                {label: "Paid", value: "Paid"},
+                                {label: "Refunded", value: "Refunded"},
+                                {label: "Failed", value: "Failed"},
                             ],
                         },
                     ]}
                 />
 
                 {loading ? (
-                    <DataTableState kind="loading" />
+                    <DataTableState kind="loading"/>
                 ) : err ? (
-                    <DataTableState kind="error" message={err} onRetry={load} />
+                    <DataTableState kind="error" message={err} onRetry={load}/>
                 ) : items.length === 0 ? (
-                    <DataTableState kind="empty" title="No transactions" />
+                    <DataTableState kind="empty" title="No transactions"/>
                 ) : (
                     <>
-                        <DataTable columns={columns} data={items} sorting={sort} onSortingChange={onSortingChange} />
+                        <DataTable columns={columns} data={items} sorting={sort} onSortingChange={onSortingChange}/>
                         <DataTablePagination
                             page={page}
                             pageSize={pageSize}
                             total={total}
-                            onPageChange={(p) => write({ page: p })}
-                            onPageSizeChange={(s) => write({ page: 1, pageSize: s })}
+                            onPageChange={(p) => write({page: p})}
+                            onPageSizeChange={(s) => write({page: 1, pageSize: s})}
                         />
                     </>
                 )}

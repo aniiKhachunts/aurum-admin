@@ -19,11 +19,10 @@ import {FeatureGuard} from "./FeatureGuard.tsx";
 export function AppRouter() {
     return (
         <Routes>
-            <Route path="/login" element={<LoginPage/>}/>
-            <Route path="/forgot-password" element={<ForgotPasswordPage/>}/>
-            <Route path="/session-expired" element={<SessionExpiredPage/>}/>
-
-            <Route element={<RequireAuth/>}>
+             <Route path="/login" element={<LoginPage/>}/>
+             <Route path="/forgot-password" element={<ForgotPasswordPage/>}/>
+             <Route path="/session-expired" element={<SessionExpiredPage/>}/>
+             <Route element={<RequireAuth/>}>
                 <Route element={<AppShell/>}>
                     <Route path="/" element={<Navigate to="/dashboard" replace/>}/>
                     <Route path="/dashboard" element={<DashboardPage/>}/>

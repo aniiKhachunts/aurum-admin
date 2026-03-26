@@ -74,7 +74,6 @@ export function Header({ title, subtitle, actions }: Props) {
             className="sticky top-0 z-40"
             style={{
                 background: "rgba(var(--bg),0.78)",
-                backdropFilter: "blur(10px)",
                 borderBottom: "1px solid rgb(var(--border))",
             }}
         >

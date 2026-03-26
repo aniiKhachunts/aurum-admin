@@ -91,8 +91,23 @@ const matrix: Record<Role, Set<Permission>> = {
     ]),
 }
 
-export function can(permission: Permission, ctx: PermissionContext) {
-    return matrix[ctx.role].has(permission)
+function normalizeRole(role: string): Role | null {
+    const map: Record<string, Role> = {
+        owner: "Owner",
+        admin: "Admin",
+        analyst: "Analyst",
+        support: "Support",
+        viewer: "Viewer",
+    }
+
+    return map[role.toLowerCase()] ?? null
+}
+
+export function can(permission: Permission, ctx?: Partial<PermissionContext>) {
+    const role = ctx?.role ? normalizeRole(ctx.role) : null
+    if (!role) return false
+
+    return matrix[role].has(permission)
 }
 
 export function roleLabel(role: Role) {
