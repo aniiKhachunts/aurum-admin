@@ -1,5 +1,5 @@
-import {useEffect, useMemo, useRef, useState} from "react"
-import type { AuditEvent } from "../api/auditApi"
+import {useEffect, useMemo, useRef, useState} from "react";
+import type { AuditEventDto as AuditEvent } from "../api/auditApi";
 import {toast} from "../../../shared/ui/Toast/toast.ts";
 
 type Props = {
@@ -52,7 +52,7 @@ export function AuditEventDialog({ open, onClose, item }: Props) {
         return () => d.removeEventListener("cancel", onCancel)
     }, [onClose])
 
-    const metaPretty = useMemo(() => safeJson(item?.meta), [item])
+    const metaPretty = useMemo(() => safeJson((item as any)?.meta), [item])
     const fullPretty = useMemo(() => safeJson(item), [item])
 
     const [copied, setCopied] = useState<string | null>(null)
@@ -166,7 +166,7 @@ export function AuditEventDialog({ open, onClose, item }: Props) {
                                         Actor
                                     </div>
                                     <div className="text-sm">
-                                        {item.actorRole} · {item.actorId}
+                                        {item.actorRole} · {(item as any)?.actorId ?? "—"}
                                     </div>
                                 </div>
 
@@ -175,7 +175,9 @@ export function AuditEventDialog({ open, onClose, item }: Props) {
                                         className="rounded-xl px-3 py-2 text-xs font-medium"
                                         style={{ border: "1px solid rgb(var(--border))", background: "rgb(var(--panel-2))" }}
                                         onClick={async () => {
-                                            await copyText(item.id, "Event ID")
+                                            if (item.entityId) {
+                                                await copyText(item.entityId, "Entity ID")
+                                            }
                                             setCopied("event")
                                             setTimeout(() => setCopied(null), 1200)
                                         }}
@@ -187,7 +189,9 @@ export function AuditEventDialog({ open, onClose, item }: Props) {
                                         className="rounded-xl px-3 py-2 text-xs font-medium"
                                         style={{ border: "1px solid rgb(var(--border))", background: "rgb(var(--panel-2))" }}
                                         onClick={async () => {
-                                            await copyText(item.entityId, "Entity ID")
+                                            if (item.entityId) {
+                                                await copyText(item.entityId, "Entity ID")
+                                            }
                                             setCopied("entity")
                                             setTimeout(() => setCopied(null), 1200)
                                         }}

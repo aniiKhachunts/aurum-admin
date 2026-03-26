@@ -1,24 +1,15 @@
-import {
-    Bar,
-    BarChart,
-    CartesianGrid,
-    Legend,
-    ResponsiveContainer,
-    Tooltip,
-    XAxis,
-    YAxis,
-} from "recharts"
-import { formatDateLabel, getTooltipStyles } from "../utils/formatters"
-import { useTheme } from "../../../shared/hooks/useTheme"
-import type { ThemeMode } from "../../../shared/lib/theme"
+import {Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis,} from "recharts"
+import {formatDateLabel, getTooltipStyles} from "../utils/formatters"
+import {useTheme} from "../../../shared/hooks/useTheme"
+import type {ThemeMode} from "../../../shared/lib/theme"
 
 const STATUS_CONFIG = [
-    { key: "queued", label: "Queued", color: "#3b82f6" },
-    { key: "running", label: "Running", color: "#8b5cf6" },
-    { key: "paused", label: "Paused", color: "#f59e0b" },
-    { key: "completed", label: "Completed", color: "#22c55e" },
-    { key: "failed", label: "Failed", color: "#ef4444" },
-    { key: "canceled", label: "Canceled", color: "#64748b" },
+    {key: "queued", label: "Queued", color: "#3b82f6"},
+    {key: "running", label: "Running", color: "#8b5cf6"},
+    {key: "paused", label: "Paused", color: "#f59e0b"},
+    {key: "completed", label: "Completed", color: "#22c55e"},
+    {key: "failed", label: "Failed", color: "#ef4444"},
+    {key: "canceled", label: "Canceled", color: "#64748b"},
 ] as const
 
 type TooltipItem = {
@@ -29,11 +20,11 @@ type TooltipItem = {
 type JobsTooltipProps = {
     active?: boolean
     payload?: readonly TooltipItem[]
-    label?: string
+    label?: string | number
     theme: ThemeMode
 }
 
-function JobsTooltip({ active, payload, label, theme }: JobsTooltipProps) {
+function JobsTooltip({active, payload, label, theme}: JobsTooltipProps) {
     if (!active || !payload || payload.length === 0) return null
 
     const styles = getTooltipStyles(theme)
@@ -51,7 +42,7 @@ function JobsTooltip({ active, payload, label, theme }: JobsTooltipProps) {
             }}
         >
             <div className={`mb-2 text-xs ${styles.title}`}>
-                {new Date(label ?? "").toLocaleDateString(undefined, {
+                {new Date(String(label ?? "")).toLocaleDateString(undefined, {
                     month: "short",
                     day: "numeric",
                     year: "numeric",
@@ -64,7 +55,7 @@ function JobsTooltip({ active, payload, label, theme }: JobsTooltipProps) {
 
                 return (
                     <div key={s.key} className="flex justify-between text-sm">
-                        <span style={{ color: s.color }}>{s.label}</span>
+                        <span style={{color: s.color}}>{s.label}</span>
                         <span className={`font-semibold ${styles.text}`}>{value}</span>
                     </div>
                 )
@@ -87,8 +78,8 @@ type Props = {
     data: JobPoint[]
 }
 
-export function JobsChart({ data }: Props) {
-    const { theme } = useTheme()
+export function JobsChart({data}: Props) {
+    const {theme} = useTheme()
     const isDark = theme === "dark"
 
     return (
@@ -100,12 +91,12 @@ export function JobsChart({ data }: Props) {
                         vertical={false}
                     />
 
-                    <XAxis dataKey="date" tickFormatter={formatDateLabel} />
+                    <XAxis dataKey="date" tickFormatter={formatDateLabel}/>
 
-                    <YAxis allowDecimals={false} domain={[0, "dataMax + 1"]} />
+                    <YAxis allowDecimals={false} domain={[0, "dataMax + 1"]}/>
 
                     <Tooltip
-                        content={(props) => <JobsTooltip {...props} theme={theme} />}
+                        content={(props) => <JobsTooltip {...props} theme={theme}/>}
                         cursor={{
                             fill: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)",
                         }}
